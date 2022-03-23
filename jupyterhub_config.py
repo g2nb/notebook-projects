@@ -23,6 +23,9 @@ c.JupyterHub.allow_named_servers = True
 c.JupyterHub.default_url = '/home'
 c.JupyterHub.extra_handlers = [('user.json', UserHandler), ('preview', PreviewHandler), ('stats', StatsHandler)]
 
+# Template config
+c.JupyterHub.template_paths = ['./templates']
+
 # Enable CORS
 origin = '*'
 c.Spawner.args = [f'--NotebookApp.allow_origin={origin}', '--NotebookApp.allow_credentials=True', "--NotebookApp.tornado_settings={\"headers\":{\"Referrer-Policy\":\"no-referrer-when-downgrade\"}}"]

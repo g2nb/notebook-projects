@@ -70,6 +70,13 @@ class Project {
         this.attach_default_click();
     }
 
+    prepare_view(list_view=true) {
+        if (list_view) this.element.classList.add('nb-project-list');
+        else this.element.classList.remove('nb-project-list');
+
+        return this.element;
+    }
+
     attach_default_click() {
         this.element.addEventListener('click', (e) => {
             if (!e.target.closest('.dropdown') &&
@@ -1402,7 +1409,7 @@ class Messages {
 class MyProjects {
     constructor() {
         this.initialize_search();                           // Initialize the search box
-        this.initialize_buttons();                          // Initialize the new project button
+        this.initialize_buttons();                          // Initialize the new project and view buttons
         MyProjects.redraw_projects()                        // Add the projects to the page
             .then(() => Shares.redraw_shares()              // Add the share projects to the page
                 .then(() => MyProjects.link_shared()))      // Mark which projects are shared
@@ -1424,7 +1431,7 @@ class MyProjects {
             .replaceAll('%', '-');
     }
 
-    static query_projects() {
+    static query_projects(remote_query=true) {
         function sort(a, b) {
             // Basic case-insensitive alphanumeric sorting
             const a_text = a.display_name().toLowerCase();
@@ -1433,6 +1440,9 @@ class MyProjects {
             if ( a_text > b_text ) return 1;
             return 0;
         }
+
+        // Skip querying the server if remote_query is false
+        if (!remote_query) return Promise.resolve();
 
         return fetch('/services/projects/user.json')
             .then(response => response.json())
@@ -1448,12 +1458,13 @@ class MyProjects {
             })
     }
 
-    static redraw_projects(message=null) {
+    static redraw_projects(message=null, query=true) {
         if (message) Messages.success_message(message);
-        return MyProjects.query_projects().then(() => {
-            document.querySelector('#projects').innerHTML = '';                     // Empty the projects div
+        return MyProjects.query_projects(query).then(() => {
+            const list_view = MyProjects.list_view();
+            document.querySelector('#projects').innerHTML = '';                      // Empty the projects div
             GenePattern.projects.my_projects.forEach((p) => {                            // Add the project widgets
-                if (!p.shared_with_me()) document.querySelector('#projects').append(p.element)
+                if (!p.shared_with_me()) document.querySelector('#projects').append(p.prepare_view(list_view))
             });
 
             // Add new project widget
@@ -1524,6 +1535,16 @@ class MyProjects {
     }
 
     initialize_buttons() {
+        $('#nb-view').click(() => {
+            setTimeout(() => {
+                MyProjects.redraw_projects(null, false)
+                    .then(() => Shares.redraw_shares(null, false)
+                        .then(() => MyProjects.link_shared()))
+                    .then(() => Library.redraw_library(null, false)
+                        .then(() => MyProjects.link_published()));
+            }, 100)
+        });
+
         // Handle new project button click
         $('#nb-new').click(() => {
             GenePattern.projects.new_project.create_project();
@@ -1539,6 +1560,10 @@ class MyProjects {
                     .then(() => MyProjects.link_published()));
         }, 1000 * 60);     // Refresh the list every minute
     }
+
+    static list_view() {
+        return $('#nb-view input[name=view]:checked').val() === 'list';
+    }
 }
 
 class Library {
@@ -1546,7 +1571,7 @@ class Library {
         this.initialize_search();   // Initialize the search box
     }
 
-    static query_library() {
+    static query_library(remote_query=true) {
         function sort(a, b) {
             // Basic case-insensitive alphanumeric sorting
             const a_text = a.updated();
@@ -1555,6 +1580,9 @@ class Library {
             if ( a_text > b_text ) return -1;
             return 0;
         }
+
+        // Skip querying the server if remote_query is false
+        if (!remote_query) return Promise.resolve();
 
         return fetch('/services/projects/library/')
             .then(response => response.json())
@@ -1573,12 +1601,13 @@ class Library {
             })
     }
 
-    static redraw_library(message=null) {
+    static redraw_library(message=null, query=true) {
         if (message) Messages.success_message(message);
-        return Library.query_library().then(() => {
+        return Library.query_library(query).then(() => {
+            const list_view = MyProjects.list_view();
             document.querySelector('#library').innerHTML = '';             // Empty the library div
             GenePattern.projects.library.forEach((p) =>                         // Add the project widgets
-                document.querySelector('#library').append(p.element));
+                document.querySelector('#library').append(p.prepare_view(list_view)));
             Library.redraw_pinned();                                                // Redraw the pinned tags
 
             // Apply any existing search filter
@@ -1644,7 +1673,7 @@ class Library {
             const projects = $('#library').find('.nb-project');
             projects.each(function(i, project) {
                 // Matching notebook
-                if ($(project).find("div:not(.dropdown)").text().toLowerCase().includes(search)) project.style.display = 'inline-block';
+                if ($(project).find("div:not(.dropdown)").text().toLowerCase().includes(search)) project.style.display = '';
 
                 // Not matching notebook
                 else project.style.display = 'none';
@@ -1655,7 +1684,7 @@ class Library {
 
 class Shares {
 
-    static query_shares() {
+    static query_shares(remote_query=true) {
         function sort(a, b) {
             // Basic case-insensitive alphanumeric sorting
             const a_text = a.owner();
@@ -1664,6 +1693,9 @@ class Shares {
             if ( a_text > b_text ) return -1;
             return 0;
         }
+
+        // Skip querying the server if remote_query is false
+        if (!remote_query) return Promise.resolve();
 
         return fetch('/services/projects/sharing/')
             .then(response => response.json())
@@ -1677,12 +1709,13 @@ class Shares {
             });
     }
 
-    static redraw_shares(message=null) {
+    static redraw_shares(message=null, query=true) {
         if (message) Messages.success_message(message);
-        return Shares.query_shares().then(() => {
+        return Shares.query_shares(query).then(() => {
+            const list_view = MyProjects.list_view();
             document.querySelector('#shares').innerHTML = '';              // Empty the shares div
             GenePattern.projects.shared_with_me.forEach((p) =>                  // Add the project widgets
-                document.querySelector('#shares').append(p.element));
+                document.querySelector('#shares').append(p.prepare_view(list_view)));
             if (GenePattern.projects.shared_with_me.length === 0)
                 document.querySelector('#nb-sharing-header').style.display = 'none';
             else document.querySelector('#nb-sharing-header').style.display = 'block';
