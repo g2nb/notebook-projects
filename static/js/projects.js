@@ -173,6 +173,10 @@ class Project {
         return (this.model.description || this.model.last_activity).toString();
     }
 
+    updated() {
+        return (this.model.last_activity || '').toString();
+    }
+
     slug() {
         return this.model.slug.toString();
     }
@@ -1432,15 +1436,6 @@ class MyProjects {
     }
 
     static query_projects(remote_query=true) {
-        function sort(a, b) {
-            // Basic case-insensitive alphanumeric sorting
-            const a_text = a.display_name().toLowerCase();
-            const b_text = b.display_name().toLowerCase();
-            if ( a_text < b_text ) return -1;
-            if ( a_text > b_text ) return 1;
-            return 0;
-        }
-
         // Skip querying the server if remote_query is false
         if (!remote_query) return Promise.resolve();
 
@@ -1454,7 +1449,6 @@ class MyProjects {
                 GenePattern.projects.images = response['images'];
                 GenePattern.projects.my_projects = [];                          // Clean the my_projects list
                 response['projects'].forEach((p) => GenePattern.projects.my_projects.push(new Project(p)));
-                GenePattern.projects.my_projects.sort(sort);                    // Sort the my_projects list
             })
     }
 
@@ -1462,8 +1456,9 @@ class MyProjects {
         if (message) Messages.success_message(message);
         return MyProjects.query_projects(query).then(() => {
             const list_view = MyProjects.list_view();
-            document.querySelector('#projects').innerHTML = '';                      // Empty the projects div
-            GenePattern.projects.my_projects.forEach((p) => {                            // Add the project widgets
+            MyProjects.sort_projects();                                                     // Sort projects
+            document.querySelector('#projects').innerHTML = '';                    // Empty the projects div
+            GenePattern.projects.my_projects.forEach((p) => {                           // Add the project widgets
                 if (!p.shared_with_me()) document.querySelector('#projects').append(p.prepare_view(list_view))
             });
 
@@ -1535,7 +1530,7 @@ class MyProjects {
     }
 
     initialize_buttons() {
-        $('#nb-view').click(() => {
+        $('#nb-view, #nb-sort').click(() => {
             setTimeout(() => {
                 MyProjects.redraw_projects(null, false)
                     .then(() => Shares.redraw_shares(null, false)
@@ -1564,6 +1559,44 @@ class MyProjects {
     static list_view() {
         return $('#nb-view input[name=view]:checked').val() === 'list';
     }
+
+    static sort_projects() {
+        // Sort alphabetically by display name
+        function alphabetical_sort(a, b) {
+            // Basic case-insensitive alphanumeric sorting
+            const a_text = a.display_name().toLowerCase();
+            const b_text = b.display_name().toLowerCase();
+
+            // Prioritize running projects
+            if (a.running() && !b.running()) return -1;
+            if (!a.running() && b.running()) return 1;
+
+            if ( a_text < b_text ) return -1;
+            if ( a_text > b_text ) return 1;
+            return 0;
+        }
+
+        // Sort by the last modified date
+        function modified_sort(a, b) {
+            const a_text = a.updated();
+            const b_text = b.updated();
+
+            // Prioritize running projects
+            if (a.running() && !b.running()) return -1;
+            if (!a.running() && b.running()) return 1;
+
+            if ( a_text > b_text ) return -1;
+            if ( a_text < b_text ) return 1;
+            return 0;
+        }
+
+        // Determine which sorting mode is selected
+        const alphabetical_selected = $('#nb-sort input[name=sort]:checked').val() === 'alphabetical';
+
+        // Sort by the selected method
+        if (alphabetical_selected) GenePattern.projects.my_projects.sort(alphabetical_sort);
+        else GenePattern.projects.my_projects.sort(modified_sort);
+    }
 }
 
 class Library {
@@ -1572,15 +1605,6 @@ class Library {
     }
 
     static query_library(remote_query=true) {
-        function sort(a, b) {
-            // Basic case-insensitive alphanumeric sorting
-            const a_text = a.updated();
-            const b_text = b.updated();
-            if ( a_text < b_text ) return 1;
-            if ( a_text > b_text ) return -1;
-            return 0;
-        }
-
         // Skip querying the server if remote_query is false
         if (!remote_query) return Promise.resolve();
 
@@ -1589,7 +1613,6 @@ class Library {
             .then(response => {
                 GenePattern.projects.library = [];                          // Clean the library list
                 response['projects'].forEach((p) => GenePattern.projects.library.push(new PublishedProject(p)));
-                GenePattern.projects.library.sort(sort);                    // Sort the library list
 
                 GenePattern.projects.pinned_tags = [];                      // Clean the pinned list
                 response['pinned'].forEach((t) => GenePattern.projects.pinned_tags.push(t));
@@ -1605,6 +1628,7 @@ class Library {
         if (message) Messages.success_message(message);
         return Library.query_library(query).then(() => {
             const list_view = MyProjects.list_view();
+            Library.sort_projects();
             document.querySelector('#library').innerHTML = '';             // Empty the library div
             GenePattern.projects.library.forEach((p) =>                         // Add the project widgets
                 document.querySelector('#library').append(p.prepare_view(list_view)));
@@ -1680,20 +1704,41 @@ class Library {
             });
         });
     }
+
+    static sort_projects() {
+        // Sort alphabetically by display name
+        function alphabetical_sort(a, b) {
+            // Basic case-insensitive alphanumeric sorting
+            const a_text = a.display_name().toLowerCase();
+            const b_text = b.display_name().toLowerCase();
+
+            if ( a_text < b_text ) return -1;
+            if ( a_text > b_text ) return 1;
+            return 0;
+        }
+
+        // Sort by the last modified date
+        function modified_sort(a, b) {
+            const a_text = a.updated();
+            const b_text = b.updated();
+
+            if ( a_text > b_text ) return -1;
+            if ( a_text < b_text ) return 1;
+            return 0;
+        }
+
+        // Determine which sorting mode is selected
+        const alphabetical_selected = $('#nb-sort input[name=sort]:checked').val() === 'alphabetical';
+
+        // Sort by the selected method
+        if (alphabetical_selected) GenePattern.projects.library.sort(alphabetical_sort);
+        else GenePattern.projects.library.sort(modified_sort);
+    }
 }
 
 class Shares {
 
     static query_shares(remote_query=true) {
-        function sort(a, b) {
-            // Basic case-insensitive alphanumeric sorting
-            const a_text = a.owner();
-            const b_text = b.owner();
-            if ( a_text < b_text ) return 1;
-            if ( a_text > b_text ) return -1;
-            return 0;
-        }
-
         // Skip querying the server if remote_query is false
         if (!remote_query) return Promise.resolve();
 
@@ -1702,7 +1747,6 @@ class Shares {
             .then(response => {
                 GenePattern.projects.shared_with_me = [];                           // Clean the sharing lists
                 response['shared_with_me'].forEach((p) => GenePattern.projects.shared_with_me.push(new SharedProject(p)));
-                GenePattern.projects.shared_with_me.sort(sort);                     // Sort the shared list
 
                 GenePattern.projects.shared_by_me = [];
                 response['shared_by_me'].forEach((p) => GenePattern.projects.shared_by_me.push(new SharedProject(p)));
@@ -1713,6 +1757,7 @@ class Shares {
         if (message) Messages.success_message(message);
         return Shares.query_shares(query).then(() => {
             const list_view = MyProjects.list_view();
+            Shares.sort_projects();
             document.querySelector('#shares').innerHTML = '';              // Empty the shares div
             GenePattern.projects.shared_with_me.forEach((p) =>                  // Add the project widgets
                 document.querySelector('#shares').append(p.prepare_view(list_view)));
@@ -1723,6 +1768,44 @@ class Shares {
             // Apply any existing search filter
             $('#nb-project-search').trigger('keyup');
         });
+    }
+
+    static sort_projects() {
+        // Sort alphabetically by display name
+        function alphabetical_sort(a, b) {
+            // Basic case-insensitive alphanumeric sorting
+            const a_text = a.display_name().toLowerCase();
+            const b_text = b.display_name().toLowerCase();
+
+            // Prioritize pending invites
+            if (a.invite_pending() && !b.invite_pending()) return -1;
+            if (!a.invite_pending() && b.invite_pending()) return 1;
+
+            if ( a_text < b_text ) return -1;
+            if ( a_text > b_text ) return 1;
+            return 0;
+        }
+
+        // Sort by the last modified date
+        function modified_sort(a, b) {
+            const a_text = a.updated();
+            const b_text = b.updated();
+
+            // Prioritize pending invites
+            if (a.invite_pending() && !b.invite_pending()) return -1;
+            if (!a.invite_pending() && b.invite_pending()) return 1;
+
+            if ( a_text > b_text ) return -1;
+            if ( a_text < b_text ) return 1;
+            return 0;
+        }
+
+        // Determine which sorting mode is selected
+        const alphabetical_selected = $('#nb-sort input[name=sort]:checked').val() === 'alphabetical';
+
+        // Sort by the selected method
+        if (alphabetical_selected) GenePattern.projects.shared_with_me.sort(alphabetical_sort);
+        else GenePattern.projects.shared_with_me.sort(modified_sort);
     }
 }
 

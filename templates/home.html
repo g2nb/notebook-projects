@@ -21,6 +21,14 @@
             <h1>Your Projects</h1>
             <p class="lead">Launch, create or share notebook projects.</p>
             <input type="search" id="nb-project-search" placeholder="Search Projects" class="form-control" />
+            <div id="nb-sort" class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-default" title="Sort by Alphabetical">
+                    <input type="radio" name="sort" autocomplete="off" value="alphabetical"> <i class="fa fa-sort-alpha-asc"></i>
+                </label>
+                <label class="btn btn-default active" title="Sort by Last Modified">
+                    <input type="radio" name="sort" autocomplete="off" value="modified" checked> <i class="fa fa-sort-numeric-desc"></i>
+                </label>
+            </div>
             <div id="nb-view" class="btn-group btn-group-toggle" data-toggle="buttons">
                 <label class="btn btn-default active" title="List View">
                     <input type="radio" name="view" autocomplete="off" value="list" checked> <i class="fa fa-th-list"></i>
