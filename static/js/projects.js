@@ -1084,8 +1084,9 @@ class NewProject {
         </div>
     `;
 
-    constructor() {
+    constructor(list_view=false) {
         this.build();
+        this.prepare_view(list_view)
         this.init_events();
     }
 
@@ -1093,6 +1094,13 @@ class NewProject {
         // Parse the template
         this.element = new DOMParser().parseFromString(this.template, "text/html")
             .querySelector('div.nb-project-new');
+    }
+
+    prepare_view(list_view=true) {
+        if (list_view) this.element.classList.add('nb-project-list');
+        else this.element.classList.remove('nb-project-list');
+
+        return this.element;
     }
 
     init_events() {
@@ -1463,7 +1471,7 @@ class MyProjects {
             });
 
             // Add new project widget
-            if (!GenePattern.projects.new_project) GenePattern.projects.new_project = new NewProject();
+            if (!GenePattern.projects.new_project) GenePattern.projects.new_project = new NewProject(list_view);
             document.querySelector('#projects').append(GenePattern.projects.new_project.element);
 
             // Link to published projects

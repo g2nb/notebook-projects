@@ -179,10 +179,13 @@
     color: black;
 }
 
+div.nb-project-new.nb-project-list .nb-project-icon {
+    padding-top: 0;
+}
+
 /** End list view */
 
 div.nb-project-new {
-    display: none;
     border: lightgray 2px dashed;
     box-shadow: none;
 }
