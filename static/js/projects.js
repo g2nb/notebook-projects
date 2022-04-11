@@ -1472,6 +1472,7 @@ class MyProjects {
 
             // Add new project widget
             if (!GenePattern.projects.new_project) GenePattern.projects.new_project = new NewProject(list_view);
+            else GenePattern.projects.new_project.prepare_view(list_view);
             document.querySelector('#projects').append(GenePattern.projects.new_project.element);
 
             // Link to published projects
