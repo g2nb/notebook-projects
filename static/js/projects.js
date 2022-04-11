@@ -680,18 +680,60 @@ class PublishedProject extends Project {
     }
 
     copy_project() {
-        // Make the call to copy the project
-        Messages.show_loading();
-        $.ajax({
-            method: 'POST',
-            url: this.publish_url(),
-            contentType: 'application/json',
-            success: (response) => {
-                MyProjects.redraw_projects(`Successfully copied ${ this.display_name() }`).then(() => {
-                    MyProjects.get(response['slug']).open_project();
+        this.check_for_copy().then((proceed) => {
+            if (proceed) {
+                // Make the call to copy the project
+                Messages.show_loading();
+                $.ajax({
+                    method: 'POST',
+                    url: this.publish_url(),
+                    contentType: 'application/json',
+                    success: (response) => {
+                        MyProjects.redraw_projects(`Successfully copied ${ this.display_name() }`).then(() => {
+                            MyProjects.get(response['slug']).open_project();
+                        });
+                    },
+                    error: () => Messages.error_message('Unable to copy project.')
                 });
-            },
-            error: () => Messages.error_message('Unable to copy project.')
+            }
+        });
+    }
+
+    check_for_copy() {
+        // Check for whether a copy of the projects exists in my projects
+        let copy_already_exists = false
+        const reg = new RegExp(`^${this.slug()}[0-9]*$`);
+        GenePattern.projects.my_projects.every(p => {
+            if (reg.test(p.slug())) {
+                copy_already_exists = p;
+                return false; // Break
+            } else return true;
+        });
+
+        return new Promise((resolve, reject) => {
+            if (!!copy_already_exists) {
+                // Lazily create the copy_confirm dialog
+                if (!this.copy_confirm_dialog) {
+                    this.copy_confirm_dialog = new Modal('copy-confirm-dialog', {
+                        title: 'Project Copy Detected',
+                        body: '<p>Are you sure that you want to make a new copy of this project? You appear to already have a copy.</p>',
+                        buttons: `
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Launch Old Copy</button>
+                            <button type="button" class="btn btn-primary" data-dismiss="modal">Make New Copy</button>`,
+                        callback: [
+                            () => resolve(false),                   // Cancel button
+                            () => copy_already_exists.open_project(),     // Launch old button
+                            () => resolve(true)]                    // Confirm copy button
+                    });
+                }
+
+                // Show the copy_confirm dialog
+                this.copy_confirm_dialog.show();
+            }
+            else {
+                resolve(true)
+            }
         });
     }
 
