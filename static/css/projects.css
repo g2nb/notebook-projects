@@ -183,6 +183,30 @@ div.nb-project-new.nb-project-list .nb-project-icon {
     padding-top: 0;
 }
 
+.nb-project-list > .nb-invite > .nb-img-top {
+    padding: 0;
+    width: 275px;
+    height: 100%;
+    float: right;
+    border-bottom: none;
+}
+
+.nb-project-list .nb-invite-accept > i.fa,
+.nb-project-list .nb-invite-reject > i.fa {
+    font-size: 50px;
+}
+
+.nb-project-list > .nb-invite > .nb-invite-line {
+    width: 100px;
+    float: left;
+    height: auto;
+    max-height: none;
+    border-top: none;
+    top: 0;
+    white-space: normal;
+    font-size: 0.8em;
+}
+
 /** End list view */
 
 div.nb-project-new {
