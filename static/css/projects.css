@@ -179,6 +179,10 @@
     color: black;
 }
 
+div.nb-project-new.nb-project-list {
+    margin-top: 10px;
+}
+
 div.nb-project-new.nb-project-list .nb-project-icon {
     padding-top: 0;
 }
