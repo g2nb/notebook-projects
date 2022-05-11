@@ -1562,6 +1562,56 @@ class MyProjects {
         return found;
     }
 
+    static toggle_sort_icon(element) {
+        const icon_clicked = element.closest('label').querySelector('i');
+        const alphanumeric_icon = element.closest('.btn-group')
+            .querySelector('.fa-sort-alpha-asc, .fa-sort-alpha-desc');
+        const modified_icon = element.closest('.btn-group').querySelector('.fa-calendar');
+        const icon_reversed = icon_clicked.classList.contains('fa-sort-alpha-desc') ||
+            icon_clicked.classList.contains('fa-rotate-180');
+        const already_active = element.closest('label').classList?.contains('active');
+
+        // If the alphanumeric sort icon is clicked
+        if (icon_clicked === alphanumeric_icon) {
+            if (already_active && !icon_reversed) { // If not reverse, change to reversed icon
+                icon_clicked.classList.remove('fa-sort-alpha-asc');
+                icon_clicked.classList.add('fa-sort-alpha-desc');
+            }
+            else if (already_active) { // If reversed, change to regular icon
+                icon_clicked.classList.remove('fa-sort-alpha-desc');
+                icon_clicked.classList.add('fa-sort-alpha-asc');
+            } // Regardless, set last modified icon back to normal
+            modified_icon.classList.remove('fa-rotate-180');
+        }
+
+        // If the last modified sort icon is clicked
+        else {
+            if (already_active && !icon_reversed) { // If not reverse, change to reversed icon
+                icon_clicked.classList.add('fa-rotate-180');
+            }
+            else if (already_active) { // If reversed, change to regular icon
+                icon_clicked.classList.remove('fa-rotate-180');
+            } // Regardless, set alphanumeric icon back to normal
+            alphanumeric_icon.classList.remove('fa-sort-alpha-desc');
+            alphanumeric_icon.classList.add('fa-sort-alpha-asc');
+        }
+    }
+
+    static toggle_reversed(element) {
+        const sort_button = element.closest('.btn-group')?.id === 'nb-sort';
+        if (!sort_button) return; // Ignore if this is not a sort button
+
+        const label = element.closest('label');
+        const already_active = label?.classList?.contains('active');
+        if (!already_active) label?.setAttribute('data-reversed', false);
+        else {
+            const already_reversed = label?.getAttribute('data-reversed') === "true";
+            if (already_reversed) label?.setAttribute('data-reversed', false);
+            else label?.setAttribute('data-reversed', true);
+        }
+        MyProjects.toggle_sort_icon(element);
+    }
+
     initialize_search() {
         $('#nb-project-search').keyup((event) => {
             let search = $(event.target).val().trim().toLowerCase();
@@ -1581,7 +1631,8 @@ class MyProjects {
     }
 
     initialize_buttons() {
-        $('#nb-view, #nb-sort').click(() => {
+        $('#nb-view, #nb-sort').click((event) => {
+            MyProjects.toggle_reversed(event.target);
             setTimeout(() => {
                 MyProjects.redraw_projects(null, false)
                     .then(() => Shares.redraw_shares(null, false)
@@ -1614,7 +1665,6 @@ class MyProjects {
     static sort_projects() {
         // Sort alphabetically by display name
         function alphabetical_sort(a, b) {
-            // Basic case-insensitive alphanumeric sorting
             const a_text = a.display_name().toLowerCase();
             const b_text = b.display_name().toLowerCase();
 
@@ -1624,6 +1674,19 @@ class MyProjects {
 
             if ( a_text < b_text ) return -1;
             if ( a_text > b_text ) return 1;
+            return 0;
+        }
+
+        function alphabetical_sort_reversed(a, b) {
+            const a_text = a.display_name().toLowerCase();
+            const b_text = b.display_name().toLowerCase();
+
+            // Prioritize running projects
+            if (a.running() && !b.running()) return -1;
+            if (!a.running() && b.running()) return 1;
+
+            if ( a_text < b_text ) return 1;
+            if ( a_text > b_text ) return -1;
             return 0;
         }
 
@@ -1641,12 +1704,28 @@ class MyProjects {
             return 0;
         }
 
+        function modified_sort_reversed(a, b) {
+            const a_text = a.updated();
+            const b_text = b.updated();
+
+            // Prioritize running projects
+            if (a.running() && !b.running()) return -1;
+            if (!a.running() && b.running()) return 1;
+
+            if ( a_text > b_text ) return 1;
+            if ( a_text < b_text ) return -1;
+            return 0;
+        }
+
         // Determine which sorting mode is selected
         const alphabetical_selected = $('#nb-sort input[name=sort]:checked').val() === 'alphabetical';
+        const reversed = $('#nb-sort > .active').attr('data-reversed') === "true";
 
         // Sort by the selected method
-        if (alphabetical_selected) GenePattern.projects.my_projects.sort(alphabetical_sort);
-        else GenePattern.projects.my_projects.sort(modified_sort);
+        if (alphabetical_selected && !reversed) GenePattern.projects.my_projects.sort(alphabetical_sort);
+        else if (alphabetical_selected) GenePattern.projects.my_projects.sort(alphabetical_sort_reversed);
+        else if (!alphabetical_selected && !reversed) GenePattern.projects.my_projects.sort(modified_sort);
+        else GenePattern.projects.my_projects.sort(modified_sort_reversed);
     }
 }
 
