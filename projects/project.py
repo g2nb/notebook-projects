@@ -54,6 +54,7 @@ class Project(Base):
         src_dir = os.path.join(Config.instance().USERS_PATH, self.owner, self.dir)
         dst_dir = os.path.join(Config.instance().USERS_PATH, self.owner, new_dir)
         shutil.copytree(src_dir, dst_dir)
+        runtime_access(dst_dir)
 
     @staticmethod
     def get(id=None, owner=None, dir=None):
@@ -114,3 +115,9 @@ def unused_dir(user, dir_name):
             count += 1
         else:
             return checked_name, count-1
+
+
+def runtime_access(target_dir):
+    """Allow access to the runtime directory (prevents errors in JupyterHub 2.3.x)"""
+    runtime_dir = os.path.join(target_dir, '.local', 'share', 'jupyter', 'runtime')
+    if os.path.exists(runtime_dir): os.chmod(runtime_dir, 0o777)

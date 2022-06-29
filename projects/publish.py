@@ -7,7 +7,7 @@ from .config import Config
 from .hub import encode_username
 from .errors import SpecError
 from .zip import zip_dir, unzip_dir, list_files
-from .project import ProjectConfig, Base
+from .project import ProjectConfig, Base, runtime_access
 
 
 class Publish(Base):
@@ -92,6 +92,7 @@ class Publish(Base):
         target_dir = os.path.join(Config.instance().USERS_PATH, hub_user, dir)  # Path in which to unzip
         os.makedirs(os.path.dirname(target_dir), mode=0o777, exist_ok=True)     # Lazily create directories
         unzip_dir(zip_path, target_dir)                                         # Unzip to directory
+        runtime_access(target_dir)                                              # Ensure runtime permissions
 
     def delete(self):
         self.deleted = True
