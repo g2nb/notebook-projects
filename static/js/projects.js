@@ -58,7 +58,8 @@ class Project {
         this.element.querySelector('.panel-title').innerHTML = this.display_name();
         this.element.querySelector('.panel-text').innerHTML = this.description();
         this.element.querySelector('.nb-image').innerHTML = this.image();
-        this.element.querySelector('.nb-image').title = `This project uses the ${this.image()} environment.`;
+        if (this.image() === "Legacy") this.element.querySelector('.nb-image').title = `This project uses an older version of the GenePattern Notebook environment.`;
+        else this.element.querySelector('.nb-image').title = `This project uses the ${this.image()} environment.`;
 
         // Display the tags
         this._apply_tags();
