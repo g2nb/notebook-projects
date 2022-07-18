@@ -273,9 +273,21 @@ div.nb-project-new > .nb-img-top {
     z-index: 4;
 }
 
-/*.nb-gear-menu > .dropdown-menu {*/
-/*    z-index: 5;*/
-/*}*/
+.nb-checkbox-wrapper {
+    position: absolute;
+    top: 30px;
+    right: 0;
+    height: 32px;
+    width: 48px;
+    z-index: 3;
+}
+
+.nb-checkbox {
+    position: relative;
+    left: 15px;
+    height: 17px;
+    width: 17px;
+}
 
 .nb-project-icon {
     display: block;
@@ -294,7 +306,7 @@ div.nb-project-new > .nb-img-top {
     filter: grayscale(80%) brightness(80%) contrast(50%);
 }
 
-#nb-header {
+.nb-header {
     position: relative;
 }
 
@@ -308,6 +320,12 @@ div.nb-project-new > .nb-img-top {
 #nb-new {
     width: 275px;
     right: 0;
+    position: absolute;
+    top: 50px;
+}
+
+#nb-bulk {
+    right: 285px;
     position: absolute;
     top: 50px;
 }

@@ -33,6 +33,9 @@ class Project {
                 </button>
                 <ul class="dropdown-menu"></ul>
             </div>
+            <div class="nb-checkbox-wrapper">
+                <input class="nb-checkbox" type="checkbox" name="nb-checkbox" />
+            </div>
             <img src="/static/images/background.jpg" alt="Project Icon" class="img-responsive nb-img-top">
             <div class="panel-body">
                 <p class="panel-title"></p>
@@ -81,6 +84,7 @@ class Project {
     attach_default_click() {
         this.element.addEventListener('click', (e) => {
             if (!e.target.closest('.dropdown') &&
+                !e.target.closest('.nb-checkbox-wrapper') &&
                 !e.target.closest('.nb-published-icon') &&
                 !e.target.closest('.nb-shared-icon')) this.open_project()
         });
@@ -107,6 +111,9 @@ class Project {
         // Handle publishing and sharing clucks
         $(this.element).find('.nb-published-icon').click(() => $(this.element).find('.nb-publish').click());
         $(this.element).find('.nb-shared-icon').click(() => $(this.element).find('.nb-share').click());
+
+        // Handle checkbox clicks
+        $(this.element).find('.nb-checkbox').click(e => MyProjects.check_project());
 
         // Enable or disable options
         this.update_gear_menu(this.running())
@@ -225,6 +232,14 @@ class Project {
     share_url() {
         if (!this.shared) return `/services/projects/sharing/`;     // Root endpoint if not published
         else this.shared.share_url();                               // Endpoint with /<id>/ if published
+    }
+
+    checked() {
+        return this.element.querySelector('.nb-checkbox').checked;
+    }
+
+    check(check_it=true) {
+        this.element.querySelector('.nb-checkbox').checked = check_it;
     }
 
     mark_published(published_project) {
@@ -446,7 +461,19 @@ class Project {
         });
     }
 
-    delete_project() {
+    delete_project(skip_dialog=false) {
+        const perform_delete = () => {
+            // Make the call to delete the project
+            $.ajax({
+                method: 'DELETE',
+                url: this.api_url(),
+                contentType: 'application/json',
+                data: '{ "remove": true }',
+                success: () => $(this.element).remove(),
+                error: () => Messages.error_message('Unable to delete project.')
+            });
+        };
+
         // Lazily create the delete dialog
         if (!this.delete_dialog) {
             this.delete_dialog = new Modal('delete-project-dialog', {
@@ -454,22 +481,13 @@ class Project {
                 body: '<p>Are you sure that you want to delete this project?</p>',
                 button_label: 'Delete',
                 button_class: 'btn-danger delete-button',
-                callback: () => {
-                    // Make the call to delete the project
-                    $.ajax({
-                        method: 'DELETE',
-                        url: this.api_url(),
-                        contentType: 'application/json',
-                        data: '{ "remove": true }',
-                        success: () => $(this.element).remove(),
-                        error: () => Messages.error_message('Unable to delete project.')
-                    });
-                }
+                callback: perform_delete
             });
         }
 
-        // Show the delete dialog
-        this.delete_dialog.show();
+        // Either show the delete dialog or just execute the delete
+        if (skip_dialog) perform_delete();
+        else this.delete_dialog.show();
     }
 
     open_project(callback) {
@@ -547,7 +565,7 @@ class Project {
     }
 
     static project_form_spec(project=null, advanced=[], required=['name', 'image'], extra=null) {
-        const params = [
+        let params = [
             {
                 label: "Project Name",
                 name: "name",
@@ -653,6 +671,9 @@ class PublishedProject extends Project {
         $(this.element).find('.nb-preview').click(e => Project.not_disabled(e,() => this.preview_project()));
         $(this.element).find('.nb-update').click(e => Project.not_disabled(e,() => this.update_project()));
         $(this.element).find('.nb-unpublish').click(e => Project.not_disabled(e,() => this.unpublish_project()));
+
+        // Hide the checkbox
+        this.element.querySelector('.nb-checkbox-wrapper').classList.add('hidden');
     }
 
     attach_default_click() {
@@ -986,6 +1007,9 @@ class SharedProject extends Project {
         // Handle menu clicks
         $(this.element).find('.nb-stop').click(e => Project.not_disabled(e,() => this.stop_project()));
         $(this.element).find('.nb-unshare').click(e => Project.not_disabled(e,() => this.unshare_project()));
+
+        // Hide the checkbox
+        this.element.querySelector('.nb-checkbox-wrapper').classList.add('hidden');
 
         // Enable or disable options
         this.update_gear_menu(this.running())
@@ -1505,12 +1529,16 @@ class MyProjects {
 
     static redraw_projects(message=null, query=true) {
         if (message) Messages.success_message(message);
+        const previously_checked = MyProjects.checked().map(e => e.slug());
         return MyProjects.query_projects(query).then(() => {
             const list_view = MyProjects.list_view();
             MyProjects.sort_projects();                                                     // Sort projects
             document.querySelector('#projects').innerHTML = '';                    // Empty the projects div
             GenePattern.projects.my_projects.forEach((p) => {                           // Add the project widgets
-                if (!p.shared_with_me()) document.querySelector('#projects').append(p.prepare_view(list_view))
+                if (!p.shared_with_me()) {
+                    document.querySelector('#projects').append(p.prepare_view(list_view));
+                    if (previously_checked.includes(p.slug())) p.check();
+                }
             });
 
             // Add new project widget
@@ -1613,6 +1641,51 @@ class MyProjects {
         MyProjects.toggle_sort_icon(element);
     }
 
+    static checked() {
+        return GenePattern.projects.my_projects.filter(p => p.checked());
+    }
+
+    static check_project() {
+        if (MyProjects.checked().length) {  // Hide sort and view buttons, Display bulk action buttons
+            document.querySelectorAll('#nb-sort, #nb-view').forEach(e => e.classList.add('hidden'));
+            document.querySelector('#nb-bulk')?.classList.remove('hidden');
+        }
+        else {  // Hide bulk action buttons, Display sort and view buttons
+            document.querySelector('#nb-bulk')?.classList.add('hidden');
+            document.querySelectorAll('#nb-sort, #nb-view').forEach(e => e.classList.remove('hidden'));
+        }
+    }
+
+    static stop_projects() {
+        const checked_projects = MyProjects.checked();          // Get the checked projects
+        for (const p of checked_projects) {                     // For each checked project
+            p.stop_project();                                   // Stop the project
+            p.check(false);                                     // Uncheck it
+        }
+    }
+
+    static delete_projects() {
+        // Lazily create the delete dialog
+        if (!this.delete_dialog) {
+            this.delete_dialog = new Modal('delete-project-dialog', {
+                title: 'Delete Project',
+                body: '<p>Are you sure that you want to delete the checked projects?</p>',
+                button_label: 'Delete',
+                button_class: 'btn-danger delete-button',
+                callback: () => {
+                    const checked_projects = MyProjects.checked();          // Get the checked projects
+                    for (const p of checked_projects) {                     // For each checked project
+                        p.delete_project(true);                   // Delete the project
+                        p.check(false);                                     // Uncheck it
+                    }
+                }
+            });
+        }
+
+        // Show the delete dialog
+        this.delete_dialog.show();
+    }
+
     initialize_search() {
         $('#nb-project-search').keyup((event) => {
             let search = $(event.target).val().trim().toLowerCase();
@@ -1632,6 +1705,9 @@ class MyProjects {
     }
 
     initialize_buttons() {
+        $('#nb-bulk > button[name="stop"]').click(() => MyProjects.stop_projects());
+        $('#nb-bulk > button[name="delete"]').click(() => MyProjects.delete_projects());
+
         $('#nb-view, #nb-sort').click((event) => {
             MyProjects.toggle_reversed(event.target);
             setTimeout(() => {
