@@ -673,7 +673,7 @@ class PublishedProject extends Project {
         $(this.element).find('.nb-unpublish').click(e => Project.not_disabled(e,() => this.unpublish_project()));
 
         // Hide the checkbox
-        this.element.querySelector('.nb-checkbox-wrapper').classList.add('hidden');
+        this.element.querySelector('.nb-checkbox').classList.add('hidden');
     }
 
     attach_default_click() {
@@ -1009,7 +1009,7 @@ class SharedProject extends Project {
         $(this.element).find('.nb-unshare').click(e => Project.not_disabled(e,() => this.unshare_project()));
 
         // Hide the checkbox
-        this.element.querySelector('.nb-checkbox-wrapper').classList.add('hidden');
+        this.element.querySelector('.nb-checkbox').classList.add('hidden');
 
         // Enable or disable options
         this.update_gear_menu(this.running())

@@ -101,7 +101,7 @@
 }
 
 .nb-project-list > .nb-img-top {
-    width: 100px;
+    width: 75px;
     object-fit: cover;
     border-bottom: 0;
     float: left;
@@ -109,8 +109,10 @@
 }
 
 .nb-project-list >.nb-image {
-  width: 80px;
-  text-align: center;
+    left: 25px;
+    width: 75px;
+    text-align: center;
+    font-size: 0.9em;
 }
 
 .nb-project-list > .panel-body {
@@ -159,6 +161,20 @@
 .nb-project-list > .nb-icon-space {
     float: right;
     color: black;
+}
+
+.nb-project-list > .nb-checkbox-wrapper {
+    position: relative;
+    top: 0;
+    left: 0;
+    height: 73px;
+    width: 25px;
+    float: left;
+}
+
+.nb-project-list > .nb-checkbox-wrapper > .nb-checkbox {
+    left: 4px;
+    top: 1px;
 }
 
 .nb-project-list > .nb-gear-menu {
@@ -275,8 +291,8 @@ div.nb-project-new > .nb-img-top {
 
 .nb-checkbox-wrapper {
     position: absolute;
-    top: 30px;
-    right: 0;
+    top: 6px;
+    left: -7px;
     height: 32px;
     width: 48px;
     z-index: 3;
@@ -354,7 +370,7 @@ div.nb-project-new > .nb-img-top {
 .nb-image {
     position: absolute;
     top: 8px;
-    left: 10px;
+    left: 32px;
     color: white;
     z-index: 1;
     font-weight: 700;
