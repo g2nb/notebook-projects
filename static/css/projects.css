@@ -13,6 +13,7 @@
     box-shadow: 0 3px 3px rgba(0, 0, 0, .24);
     border: lightgray 1px solid;
     position: relative;
+    background-color: #b8d5df;
 }
 
 .nb-project .nb-img-top {
@@ -20,6 +21,7 @@
     height: 100px;
     object-fit: cover;
     border-bottom: 1px solid rgba(0, 0, 0, .125);
+    background: radial-gradient(circle, rgb(15, 102, 134) 0%, rgb(2, 56, 68) 100%);
 }
 
 .nb-project > .panel-body > .panel-title {
@@ -74,7 +76,12 @@
     height: 1em;
     margin-top: 0.2em;
     /* bg color = bg color under block */
-    background: white;
+    background: #b8d5df;
+}
+
+.nb-project.nb-stopped > .panel-body > .panel-text:after,
+.nb-project.nb-project-new > .panel-body > .panel-text:after {
+    background: #FFFFFF;
 }
 
 .nb-project > .panel-body > .nb-tags {
@@ -108,11 +115,11 @@
     height: auto;
 }
 
-.nb-project-list >.nb-image {
-    left: 25px;
-    width: 75px;
-    text-align: center;
-    font-size: 0.9em;
+.nb-project-list > .nb-image {
+    height: 50px;
+    width: 50px;
+    top: 12px;
+    left: 37px;
 }
 
 .nb-project-list > .panel-body {
@@ -174,7 +181,7 @@
 
 .nb-project-list > .nb-checkbox-wrapper > .nb-checkbox {
     left: 4px;
-    top: 1px;
+    top: 22px;
 }
 
 .nb-project-list > .nb-gear-menu {
@@ -201,6 +208,10 @@ div.nb-project-new.nb-project-list {
 
 div.nb-project-new.nb-project-list .nb-project-icon {
     padding-top: 0;
+}
+
+div.nb-project-new.nb-project-list > .nb-img-top {
+    margin-left: 24px;
 }
 
 .nb-project-list > .nb-invite > .nb-img-top {
@@ -241,7 +252,7 @@ div.nb-project-new > .nb-img-top {
 .nb-icon-space {
     position: absolute;
     top: 8px;
-    right: 60px;
+    right: 52px;
     width: 100px;
     text-align: right;
     color: white;
@@ -252,7 +263,7 @@ div.nb-project-new > .nb-img-top {
 
 .nb-published-icon,
 .nb-shared-icon {
-    width: 30px;
+    width: 25px;
 }
 
 .nb-gear-menu {
@@ -314,12 +325,9 @@ div.nb-project-new > .nb-img-top {
     padding-top: 15px;
 }
 
-.nb-project > img {
-    filter: hue-rotate(-30deg)
-}
-
-.nb-stopped > img {
-    filter: grayscale(80%) brightness(80%) contrast(50%);
+.nb-project.nb-stopped,
+.nb-project.nb-project-new {
+    background-color: #FFFFFF;
 }
 
 .nb-header {
@@ -369,11 +377,14 @@ div.nb-project-new > .nb-img-top {
 
 .nb-image {
     position: absolute;
-    top: 8px;
-    left: 32px;
+    top: 15px;
+    left: 100px;
     color: white;
     z-index: 1;
     font-weight: 700;
+    height: 73px;
+    width: 73px;
+    filter: drop-shadow(0 0 5px rgb(255, 255, 255));
 }
 
 .nb-advanced {

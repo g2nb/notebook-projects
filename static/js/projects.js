@@ -21,7 +21,7 @@ class Project {
     shared = null;
     template = `
         <div class="panel nb-project">
-            <div class="nb-image"></div>
+            <img class="nb-image"></img>
             <div class="nb-icon-space">
                 <i title="Shared" class="fa fa-users nb-shared-icon hidden"></i>
                 <i title="Published" class="fa fa-newspaper-o nb-published-icon hidden"></i>
@@ -36,7 +36,7 @@ class Project {
             <div class="nb-checkbox-wrapper">
                 <input class="nb-checkbox" type="checkbox" name="nb-checkbox" />
             </div>
-            <img src="/static/images/background.jpg" alt="Project Icon" class="img-responsive nb-img-top">
+            <div class="img-responsive nb-img-top"></div>
             <div class="panel-body">
                 <p class="panel-title"></p>
                 <p class="panel-text"></p>
@@ -60,9 +60,8 @@ class Project {
         // Display name and other metadata
         this.element.querySelector('.panel-title').innerHTML = this.display_name();
         this.element.querySelector('.panel-text').innerHTML = this.description();
-        this.element.querySelector('.nb-image').innerHTML = this.image();
-        if (this.image() === "Legacy") this.element.querySelector('.nb-image').title = `This project uses an older version of the GenePattern Notebook environment.`;
-        else this.element.querySelector('.nb-image').title = `This project uses the ${this.image()} environment.`;
+        this.element.querySelector('.nb-image').src = this.image_logo();
+        this.element.querySelector('.nb-image').title = this.image_title();
 
         // Display the tags
         this._apply_tags();
@@ -191,6 +190,18 @@ class Project {
 
     image() {
         return this.model.image.toString();
+    }
+
+    image_logo() {
+        if (this.image() === 'Legacy') return '/static/images/genepattern.png';
+        else if (this.image().includes('Python')) return '/static/images/python.png';
+        else return '/static/images/g2nb_logo.svg'
+    }
+
+    image_title() {
+        if (this.image() === "Legacy")
+            return 'This project uses an older version of the GenePattern Notebook environment.';
+        else return `This project uses the ${this.image()} environment.`;
     }
 
     author() {
