@@ -60,6 +60,7 @@ class Project {
         // Display name and other metadata
         this.element.querySelector('.panel-title').innerHTML = this.display_name();
         this.element.querySelector('.panel-text').innerHTML = this.description();
+        this.element.querySelector('.panel-text').title = this.description();
         this.element.querySelector('.nb-image').src = this.image_logo();
         this.element.querySelector('.nb-image').title = this.image_title();
 

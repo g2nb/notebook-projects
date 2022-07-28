@@ -151,7 +151,7 @@
 .nb-project-list > .panel-body > .nb-tags {
     position: absolute;
     right: 20px;
-    width: 100%;
+    width: auto;
     text-align: right;
 }
 
