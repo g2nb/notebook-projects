@@ -77,6 +77,7 @@ class Project {
     prepare_view(list_view=true) {
         if (list_view) this.element.classList.add('nb-project-list');
         else this.element.classList.remove('nb-project-list');
+        this._adjust_width();
 
         return this.element;
     }
@@ -276,6 +277,23 @@ class Project {
             tag.innerHTML = t;
             tag_box.append(tag);
         });
+    }
+
+    _adjust_width() {
+        setTimeout(() => {
+            // Get the width of the project description element
+            const d_element = this.element.querySelector('.panel-body > .panel-text');
+
+            // If list view, dynamically generate the width to set
+            if (this.element.classList.contains('nb-project-list')) {
+                const t_element = this.element.querySelector('.nb-tags');
+                d_element.style.width = ''; // Blank last set width before calculating
+                d_element.style.width = (d_element.offsetWidth - t_element.offsetWidth) + 100 + "px"
+            }
+
+            // Otherwise, unset the width
+            else d_element.style.width = '';
+        }, 100);
     }
 
     duplicate_project() {
@@ -1507,6 +1525,7 @@ class MyProjects {
             .then(() => Library.redraw_library()            // Then add the public projects to the page
                 .then(() => MyProjects.link_published()));  // Mark which projects are published
         this.initialize_refresh();                          // Begin the periodic refresh
+        this.initialize_resize();                           // Event callbacks on resize
     }
 
     static decode_username(encoded_name) {
@@ -1734,6 +1753,14 @@ class MyProjects {
         // Handle new project button click
         $('#nb-new').click(() => {
             GenePattern.projects.new_project.create_project();
+        });
+    }
+
+    initialize_resize() {
+        window.addEventListener('resize', () => {
+            GenePattern.projects.my_projects.forEach(p => p._adjust_width());
+            GenePattern.projects.shared_with_me.forEach(p => p._adjust_width());
+            GenePattern.projects.library.forEach(p => p._adjust_width());
         });
     }
 
