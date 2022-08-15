@@ -1,6 +1,10 @@
 
 /** Projects Page **/
 
+.nb-lead {
+    width: calc(100% - 450px);
+}
+
 .nb-project {
     display: inline-block;
     width: 272px;
@@ -109,14 +113,28 @@
 }
 
 .nb-project-list > .nb-img-top {
-    width: 51px;
+    width: 31px;
     object-fit: cover;
-    border-bottom: 0;
     float: left;
-    height: 51px;
+    height: 31px;
+    margin: 10px 0 10px 5px;
+    border-radius: 15px;
+    background: radial-gradient(circle, rgb(15, 102, 134) 0%, rgb(2, 56, 68) 100%);
+    border: 2px rgb(2, 56, 68) solid;
+}
+
+.nb-project.nb-project-list.nb-stopped > .nb-img-top {
+    background: #FFFFFF;
+    border: 2px rgba(0, 0, 0, .125) solid;
+}
+
+.nb-project.nb-project-list.nb-project-new > .nb-img-top {
+    background: none;
+    border: none;
 }
 
 .nb-project-list > .nb-image {
+    display: none;
     height: 26px;
     width: 26px;
     top: 13px;
@@ -220,12 +238,14 @@ div.nb-project-new.nb-project-list {
 }
 
 div.nb-project-new.nb-project-list .nb-project-icon {
-    padding-top: 9px;
-    font-size: 32px;
+    margin-top: -19px;
+    font-size: 37px;
+    padding-left: 4px;
 }
 
 div.nb-project-new.nb-project-list > .nb-img-top {
     margin-left: 24px;
+    padding-right: 35px;
 }
 
 .nb-project-list > .nb-invite > .nb-img-top {
