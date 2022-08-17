@@ -113,12 +113,12 @@
 }
 
 .nb-project-list > .nb-img-top {
-    width: 31px;
+    width: 17px;
     object-fit: cover;
     float: left;
-    height: 31px;
-    margin: 10px 0 10px 5px;
-    border-radius: 15px;
+    height: 17px;
+    margin: 17px 0 10px 5px;
+    border-radius: 8px;
     background: radial-gradient(circle, rgb(15, 102, 134) 0%, rgb(2, 56, 68) 100%);
     border: 2px rgb(2, 56, 68) solid;
 }
@@ -239,12 +239,12 @@ div.nb-project-new.nb-project-list {
 
 div.nb-project-new.nb-project-list .nb-project-icon {
     margin-top: -19px;
-    font-size: 37px;
-    padding-left: 4px;
+    font-size: 20px;
+    padding-left: 17px;
 }
 
 div.nb-project-new.nb-project-list > .nb-img-top {
-    margin-left: 24px;
+    margin-left: 12px;
     padding-right: 35px;
 }
 

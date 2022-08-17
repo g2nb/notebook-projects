@@ -55,7 +55,7 @@ class Project {
             .querySelector('div.nb-project');
 
         // Mark as active or stopped
-        if (!this.running()) this.element.classList.add('nb-stopped');
+        this.update_running(this.running())
 
         // Display name and other metadata
         this.element.querySelector('.panel-title').innerHTML = this.display_name();
@@ -253,6 +253,17 @@ class Project {
 
     check(check_it=true) {
         this.element.querySelector('.nb-checkbox').checked = check_it;
+    }
+
+    update_running(running) {
+        if (running) {
+            this.element.classList.remove('nb-stopped');
+            this.element.querySelector('.nb-img-top').title = 'This project is running';
+        }
+        else {
+            this.element.querySelector('.nb-img-top').title = 'This project is stopped';
+            this.element.classList.add('nb-stopped');
+        }
     }
 
     mark_published(published_project) {
@@ -484,7 +495,7 @@ class Project {
             contentType: 'application/json',
             data: '{ "remove": false }',
             success: () => {
-                this.element.classList.add('nb-stopped');
+                this.update_running(false);
                 this.update_gear_menu(false);
             },
             error: () => Messages.error_message('Unable to stop project.')
@@ -527,8 +538,7 @@ class Project {
             window.open(this.get_url());
         };
 
-        let running = !this.element.classList.contains('nb-stopped');
-        if (running) { // If running, just open a new tab
+        if (this.running()) { // If running, just open a new tab
             callback(this);
             Messages.hide_loading();
         }
@@ -557,7 +567,7 @@ class Project {
                 callback(this);
             }, 500);
 
-            this.element.classList.remove('nb-stopped'); // Mark as running
+            this.update_running(true); // Mark as running
         }
     }
 
