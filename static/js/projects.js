@@ -1746,9 +1746,11 @@ class MyProjects {
     }
 
     initialize_buttons() {
+        // Handle stop and delete
         $('#nb-bulk > button[name="stop"]').click(() => MyProjects.stop_projects());
         $('#nb-bulk > button[name="delete"]').click(() => MyProjects.delete_projects());
 
+        // Handle sort and view
         $('#nb-view, #nb-sort').click((event) => {
             MyProjects.toggle_reversed(event.target);
             setTimeout(() => {
@@ -1763,6 +1765,14 @@ class MyProjects {
         // Handle new project button click
         $('#nb-new').click(() => {
             GenePattern.projects.new_project.create_project();
+        });
+
+        // Handle select all / none
+        $('#projects-header > input[type=checkbox]').click(event => {
+            const all_boxes = $('#projects > .nb-project input[type=checkbox]');
+            if (event.target.checked) all_boxes.prop('checked', true);
+            else all_boxes.prop('checked', false);
+            MyProjects.check_project();
         });
     }
 
