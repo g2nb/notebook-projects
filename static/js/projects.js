@@ -1256,6 +1256,9 @@ class NewProject {
                         return;
                     }
 
+                    // Show the loading spinner
+                    Messages.show_loading();
+
                     // Make the AJAX request
                     $.ajax({
                         method: 'POST',
@@ -1273,7 +1276,7 @@ class NewProject {
                         success: () => {
                             // Open the project and refresh the page
                             window.open(this.get_url() + slug);
-                            MyProjects.redraw_projects();
+                            MyProjects.redraw_projects(`${form_data['name']} project created.`);
                         },
                         error: () => Messages.error_message('Unable to create project.')
                     });
