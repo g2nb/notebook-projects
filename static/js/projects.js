@@ -781,7 +781,7 @@ class PublishedProject extends Project {
                         body: '<p>Are you sure that you want to make a new copy of this project? You appear to already have a copy.</p>',
                         buttons: `
                             <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-default" data-dismiss="modal">Launch Old Copy</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Launch Existing Copy</button>
                             <button type="button" class="btn btn-primary" data-dismiss="modal">Make New Copy</button>`,
                         callback: [
                             () => resolve(false),                   // Cancel button
