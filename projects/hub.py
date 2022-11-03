@@ -23,7 +23,37 @@ def encode_username(username):
         .replace('%', '-')
 
 
+def stop_named_server(hub_auth, user, server_name):
+    """Call JupyterHub API to stop a named server - use unencoded username"""
+    base_api_url = hub_auth.api_url
+    token = hub_auth.api_token
+    hub_user = encode_username(user)
+    # Make the request to the JupyterHub API
+    response = requests.delete(f'{base_api_url}/users/{hub_user}/servers/{server_name}',
+          headers={ 'Authorization': 'token %s' % token })
+    response.raise_for_status()
+    if response.status_code == 204: return True     # Return True if server completely stopped
+    else: return False                              # Return False if taking a while to stop
+
+
+def delete_named_server(hub_auth, user, server_name):
+    """Call JupyterHub API to delete a named server - use unencoded username"""
+    base_api_url = hub_auth.api_url
+    token = hub_auth.api_token
+    hub_user = encode_username(user)
+    # Make the request to the JupyterHub API
+    response = requests.delete(f'{base_api_url}/users/{hub_user}/servers/{server_name}',
+          headers={ 'Authorization': 'token %s' % token },
+          data=json.dumps({
+              'remove': True,
+          }))
+    response.raise_for_status()
+    if response.status_code == 204: return True     # Return True if server completely deleted
+    else: return False                              # Return False if taking a while to delete
+
+
 def create_named_server(hub_auth, user, server_name, spec):
+    """Call JupyterHub API to create a named server - use unencoded username"""
     base_api_url = hub_auth.api_url
     token = hub_auth.api_token
     hub_user = encode_username(user)

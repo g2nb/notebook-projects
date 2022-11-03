@@ -2,6 +2,7 @@ var GenePattern = GenePattern || {};
 GenePattern.preview = GenePattern.preview || {};
 GenePattern.preview.id = GenePattern.preview.id || '';
 GenePattern.preview.project = GenePattern.preview.project || {};
+GenePattern.preview.personal = GenePattern.preview.personal || false;
 
 class Preview {
     constructor() {
@@ -9,7 +10,12 @@ class Preview {
     }
 
     static query_preview() {
-        return fetch(`/services/projects/library/${GenePattern.preview.id}/?files=true`)
+        // Is this a personal project or a published project
+        const query_url = GenePattern.preview.personal ?
+            `/services/projects/project/${GenePattern.preview.id}/?files=true` :
+            `/services/projects/library/${GenePattern.preview.id}/?files=true`;
+
+        return fetch(query_url)
             .then(response => response.json())
             .then(response => {
                 GenePattern.preview.project = response;
@@ -26,6 +32,13 @@ class Preview {
         $('#nb-preview-owner').text(GenePattern.preview.project.owner);
         $('#nb-preview-updated').text(GenePattern.preview.project.updated);
         $('#nb-preview-comment').text(GenePattern.preview.project.comment);
+
+        // If a personal project, hide certain parts of the UI
+        if (GenePattern.preview.personal) {
+            $('#nb-preview-updated').parent().hide();
+            $('#nb-preview-comment').parent().hide();
+            $('.nb-preview-buttons').hide();
+        }
 
         // Add tags
         GenePattern.preview.project.tags.split(',')
@@ -70,6 +83,7 @@ class Preview {
             // Extract the GET parameters from the URL
             const params = new URLSearchParams(window.location.search);
             GenePattern.preview.id = params.get('id');
+            GenePattern.preview.personal = String(params.get('personal')).toLowerCase()  === 'true';
 
             // If there are problems extracting the parameters, show an error message
             if (!GenePattern.preview.id) {

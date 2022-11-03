@@ -1,12 +1,13 @@
 import json
 import os
+from sqlalchemy.exc import InvalidRequestError
 from tornado.escape import to_basestring
 from tornado.web import Application, RequestHandler, authenticated, addslash
 from jupyterhub.services.auth import HubOAuthenticated, HubOAuthCallbackHandler
 from .config import Config
 from .emails import send_published_email, validate_token
 from .errors import ExistsError, PermissionError, SpecError, InvalidProjectError, InviteError
-from .hub import create_named_server, user_spawners, decode_username
+from .hub import create_named_server, user_spawners, decode_username, stop_named_server, delete_named_server
 from .project import Project, unused_dir
 from .publish import Publish, Tag, Update
 from .sharing import Share, Invite
@@ -35,16 +36,22 @@ class ProjectHandler(HubOAuthenticated, BaseHandler):
     """Endpoint for starting, stopping, editing and deleting notebook projects"""
 
     @addslash
+    @authenticated
     def get(self, id=None):
         """Get the project's metadata or list of projects"""
         if id is None: self._list_projects()        # List all personal projects
         else: self._project_info(id)                # List a single project with the specified id
 
     def _list_projects(self):
-        self.send_error(501, reason='Endpoint not yet implemented')  # TODO: Implement
+        user = self.current_username()
+        all_projects = [p.json() for p in Project.all(user)]
+        self.write({'projects': all_projects})
 
-    def _project_info(self, id):
-        self.send_error(501, reason='Endpoint not yet implemented')  # TODO: Implement
+    def _project_info(self, dir):
+        user = self.current_username()
+        project = Project.get(owner=user, dir=dir)
+        include_files = self.get_argument("files", None, True)
+        self.write(project.json(include_files=include_files))
 
     @addslash
     def post(self, id=None):
@@ -89,6 +96,7 @@ class ProjectHandler(HubOAuthenticated, BaseHandler):
         self.write({'url': url, 'dir': dir, 'slug': dir_name})
 
     @addslash
+    @authenticated
     def delete(self, id=None, directive=None):
         """Stop or delete the project"""
         if not id:                      # No id, return error
@@ -100,11 +108,26 @@ class ProjectHandler(HubOAuthenticated, BaseHandler):
         else:                           # Directive not recognized
             self.send_error(400, reason='Unknown directive')
 
-    def _stop_project(self, id):
-        self.send_error(501, reason='Endpoint not yet implemented')  # TODO: Implement
+    def _stop_project(self, dir):
+        """Stop a running project"""
+        # TODO: How do we know if a project is running without querying the hub database?
+        user = self.current_username()
+        project = Project.get(owner=user, dir=dir)  # Get the project
+        if project is None:                         # Ensure that an existing project was found
+            raise ExistsError
+        fully_stopped = stop_named_server(self.hub_auth, user, dir)
+        self.write({'stopped': fully_stopped})
 
-    def _delete_project(self, id):
-        self.send_error(501, reason='Endpoint not yet implemented')  # TODO: Implement
+    def _delete_project(self, dir):
+        """Delete a project"""
+        user = self.current_username()
+        project = Project.get(owner=user, dir=dir)  # Get the project
+        if project is None:                         # Ensure that an existing project was found
+            raise ExistsError
+        delete_named_server(self.hub_auth, user, dir)
+        try: project.delete()                       # Delete it from the projects database
+        except InvalidRequestError: pass            # If only in the hub database, ignore the error
+        self.write(project.json())
 
 
 class PublishHandler(HubOAuthenticated, BaseHandler):
@@ -485,6 +508,7 @@ class EndpointHandler(BaseHandler):
     def get(self):
         self.write({
             '/services/projects/user.json': 'Notebook projects information about the current user',
+            '/services/projects/project':   'Browse or edit your notebook projects',
             '/services/projects/library':   'Browse, publish or copy public notebook projects from the library',
             '/services/projects/sharing':   'Share projects with other users',
         })

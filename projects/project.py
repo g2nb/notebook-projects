@@ -7,8 +7,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, backref
 from .config import Config
 from .errors import SpecError
-from .hub import encode_username, spawner_info
-
+from .hub import encode_username, spawner_info, user_spawners
+from .zip import sizeof_fmt
 
 Base = declarative_base()
 
@@ -23,7 +23,7 @@ class Project(Base):
     image = Column(String(255))
 
     name = Column(String(255))
-    description = Column(String(255), default='')
+    description = Column(String(511), default='')
     author = Column(String(255), default='')
     quality = Column(String(255), default='')
     citation = Column(String(511), default='')
@@ -43,12 +43,16 @@ class Project(Base):
         except json.JSONDecodeError:
             raise SpecError('Error parsing json')
 
-    def json(self):
+    def json(self, include_files=False):
         data = { c.name: getattr(self, c.name) for c in self.__table__.columns }
         for k in data:
             if isinstance(data[k], datetime):                               # Special handling for datetimes
                 data[k] = str(data[k])
+        if include_files: data['files'] = self.list_files()
         return data
+
+    def delete(self):
+        Project.remove(self)
 
     def duplicate(self, new_dir):
         src_dir = os.path.join(Config.instance().USERS_PATH, self.owner, self.dir)
@@ -56,8 +60,70 @@ class Project(Base):
         shutil.copytree(src_dir, dst_dir)
         runtime_access(dst_dir)
 
+    def list_files(self):
+        file_list = []
+        dir_path = self.dir_path()
+        for dir_, subdirs, files in os.walk(dir_path):
+            for f in subdirs:
+                if not f.startswith('.'):
+                    f_data = os.stat(os.path.join(dir_, f))
+                    file_list.append({'filename': os.path.relpath(os.path.join(os.path.relpath(dir_, dir_path), f) + '/', './'),
+                                      'size': sizeof_fmt(f_data.st_size),
+                                      'modified': str(datetime.fromtimestamp(f_data.st_mtime))})
+            for f in files:
+                if not f.startswith('.'):
+                    f_data = os.stat(os.path.join(dir_, f))
+                    file_list.append({'filename': os.path.relpath(os.path.join(os.path.relpath(dir_, dir_path), f), './'),
+                                      'size': sizeof_fmt(f_data.st_size),
+                                      'modified': str(datetime.fromtimestamp(f_data.st_mtime))})
+        return file_list
+
+    def min_metadata(self):
+        return self.dir and self.image and self.name and self.owner
+
+    def dir_path(self):
+        return os.path.join(Config.instance().USERS_PATH, self.owner, self.dir)
+
+    def save(self):
+        # Ensure that the project has all of the required information
+        if not self.min_metadata(): raise SpecError('Missing required attributes')
+        # Save the project to the database and return the json representation
+        project_json = Project.put(self)
+        return project_json
+
+    @staticmethod
+    def from_spawner(owner, spawner):
+        metadata = json.loads(spawner[2])
+        data = {
+            'dir': spawner[0],
+            'owner': owner,
+            'image': metadata['image'] if 'image' in metadata else '',
+            'name': metadata['name'] if 'name' in metadata else spawner[0],
+            'description': metadata['description'] if 'description' in metadata else '',
+            'author': metadata['author'] if 'author' in metadata else '',
+            'quality': metadata['quality'] if 'quality' in metadata else '',
+            'tags': metadata['tags'] if 'tags' in metadata else '',
+            'citation': metadata['citation'] if 'citation' in metadata else ''
+        }
+        return Project(json.dumps(data))
+
     @staticmethod
     def get(id=None, owner=None, dir=None):
+        """Get project info from the projects database. If no info is found, fall back to querying the hub database"""
+
+        # Attempt to query the projects database
+        session = ProjectConfig.instance().Session()
+        query = session.query(Project)
+        if id is not None:      query = query.filter(Project.id == id)
+        if owner is not None:   query = query.filter(Project.owner == owner)
+        if dir is not None:     query = query.filter(Project.dir == dir)
+        project = query.first()
+        session.close()
+
+        # Check to see if a project was retrieved, if so return it; if not, query the hub database
+        if project is not None: return project
+
+        # Check for the project in the hub database, return if found
         spawner = spawner_info(owner, dir)
         if spawner:
             metadata = json.loads(spawner[2])
@@ -74,15 +140,38 @@ class Project(Base):
             }
             return Project(json.dumps(data))
         else: return None
-        # TODO: Likely implementation after refactor
-        # session = ProjectConfig.instance().Session()
-        # query = session.query(Project)
-        # if id is not None:      query = query.filter(Project.id == id)
-        # if owner is not None:   query = query.filter(Project.owner == owner)
-        # if dir is not None:     query = query.filter(Project.dir == dir)
-        # project = query.first()
-        # session.close()
-        # return project
+
+    @staticmethod
+    def put(project):
+        session = ProjectConfig.instance().Session()
+        session.add(project)
+        session.commit()
+        d = project.json()
+        session.close()
+        return d  # Return the json representation
+
+    @staticmethod
+    def remove(project):
+        session = ProjectConfig.instance().Session()
+        session.delete(project)
+        session.commit()
+        session.close()
+
+    @staticmethod
+    def all(owner):
+        # Attempt to query the projects database
+        session = ProjectConfig.instance().Session()
+        query = session.query(Project).filter(Project.owner == owner)
+        results = query.all()
+        session.close()
+
+        # Check to see if projects were retrieved, if so return
+        if len(results): return results
+
+        # If not, query the hub database
+        spawners = user_spawners(owner)
+        projects = [Project.from_spawner(owner, s) for s in spawners if s[0] != '']
+        return list(filter(lambda p: '.' not in p.dir, projects))      # Filter out shares
 
 
 # Set database configuration

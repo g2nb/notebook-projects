@@ -95,6 +95,7 @@ class Project {
         // Add the menu items
         $(this.element).find('.dropdown-menu')
             .append($('<li><a href="#" class="dropdown-item nb-edit">Edit</a></li>'))
+            .append($('<li><a href="#" class="dropdown-item nb-preview">Preview</a></li>'))
             .append($('<li><a href="#" class="dropdown-item nb-publish">Publish</a></li>'))
             .append($('<li><a href="#" class="dropdown-item nb-share">Share</a></li>'))
             .append($('<li><a href="#" class="dropdown-item nb-duplicate">Duplicate</a></li>'))
@@ -105,6 +106,7 @@ class Project {
         $(this.element).find('.nb-stop').click(e => Project.not_disabled(e,() => this.stop_project()));
         $(this.element).find('.nb-delete').click(e => Project.not_disabled(e,() => this.delete_project()));
         $(this.element).find('.nb-edit').click(e => Project.not_disabled(e,() => this.edit_project()));
+        $(this.element).find('.nb-preview').click(e => Project.not_disabled(e,() => this.preview_project()));
         $(this.element).find('.nb-duplicate').click(e => Project.not_disabled(e,() => this.duplicate_project()));
         $(this.element).find('.nb-publish').click(e => Project.not_disabled(e,() => this.publish_project()));
         $(this.element).find('.nb-share').click(e => Project.not_disabled(e,() => this.share_project()));
@@ -237,6 +239,10 @@ class Project {
         return `${GenePattern.projects.base_url}api/users/${GenePattern.projects.encoded_username}/servers/${this.slug()}`;
     }
 
+    preview_url() {
+        return `/hub/preview?id=${this.slug()}&personal=true`;
+    }
+
     publish_url() {
         if (!this.published) return `/services/projects/library/`;  // Root endpoint if not published
         else this.published.publish_url();                          // Endpoint with /<id>/ if published
@@ -305,6 +311,10 @@ class Project {
             // Otherwise, unset the width
             else d_element.style.width = '';
         }, 100);
+    }
+
+    preview_project() {
+        window.open(this.preview_url());
     }
 
     duplicate_project() {
