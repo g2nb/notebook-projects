@@ -1716,13 +1716,14 @@ class MyProjects {
             p.stop_project();                                   // Stop the project
             p.check(false);                                     // Uncheck it
         }
+        MyProjects.check_project();                             // Update the buttons
     }
 
     static delete_projects() {
         // Lazily create the delete dialog
         if (!this.delete_dialog) {
             this.delete_dialog = new Modal('delete-project-dialog', {
-                title: 'Delete Project',
+                title: 'Delete Projects',
                 body: '<p>Are you sure that you want to delete the checked projects?</p>',
                 button_label: 'Delete',
                 button_class: 'btn-danger delete-button',
@@ -1732,6 +1733,7 @@ class MyProjects {
                         p.delete_project(true);                   // Delete the project
                         p.check(false);                                     // Uncheck it
                     }
+                    MyProjects.check_project();                             // Update the buttons
                 }
             });
         }
