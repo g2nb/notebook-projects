@@ -276,16 +276,17 @@ div.nb-project-new.nb-project-list > .nb-img-top {
 
 .nb-project-list .nb-invite-accept > i.fa,
 .nb-project-list .nb-invite-reject > i.fa {
-    font-size: 50px;
+    font-size: 32px;
 }
 
 .nb-project-list > .nb-invite > .nb-invite-line {
     width: 100px;
-    float: left;
+    float: right;
     height: auto;
     max-height: none;
     border-top: none;
     top: 0;
+    right: 275px;
     white-space: normal;
     font-size: 0.8em;
 }
