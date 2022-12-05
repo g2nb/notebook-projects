@@ -167,13 +167,21 @@ class StatsHandler(BaseHandler):
 
 
 def pre_spawn_hook(spawner, userdir=''):
-    project_dir = os.path.join(userdir, spawner.user.name, spawner.name)
-    if shared_with_me(spawner.name):    # If this is a project shared with me, lazily create the symlink
+    user_dir = os.path.join(userdir, spawner.user.name)
+    project_dir = os.path.join(user_dir, spawner.name)
+
+    # If the user's directory doesn't exist, create it lazily
+    if not os.path.exists(user_dir): os.makedirs(user_dir, 0o777, exist_ok=True)
+
+    # If this is a project shared with me, lazily create the symlink
+    if shared_with_me(spawner.name):
         if not os.path.exists(project_dir):
             os.symlink(f'../{user(spawner.name)}/{slug(spawner.name)}', project_dir)
-    else:                               # Otherwise, lazily create the project directory
-        os.makedirs(project_dir, 0o777, exist_ok=True)
-    os.chmod(project_dir, 0o777)
+
+    # Otherwise, lazily create the project directory
+    else: os.makedirs(project_dir, 0o777, exist_ok=True)
+
+    os.chmod(project_dir, 0o777)  # chmod the directory
     write_manifest(project_dir, spawner.user.name, spawner.name, spawner)  # Lazily update the project manifest
 
 
