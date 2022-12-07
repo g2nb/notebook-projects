@@ -67,15 +67,19 @@ class Project(Base):
             for f in subdirs:
                 if not f.startswith('.'):
                     f_data = os.stat(os.path.join(dir_, f))
-                    file_list.append({'filename': os.path.relpath(os.path.join(os.path.relpath(dir_, dir_path), f) + '/', './'),
-                                      'size': sizeof_fmt(f_data.st_size),
-                                      'modified': str(datetime.fromtimestamp(f_data.st_mtime))})
+                    relative_path = os.path.relpath(os.path.join(os.path.relpath(dir_, dir_path), f) + '/', './')
+                    if not relative_path.startswith('.'):
+                        file_list.append({'filename': relative_path,
+                                          'size': sizeof_fmt(f_data.st_size),
+                                          'modified': str(datetime.fromtimestamp(f_data.st_mtime))})
             for f in files:
                 if not f.startswith('.'):
                     f_data = os.stat(os.path.join(dir_, f))
-                    file_list.append({'filename': os.path.relpath(os.path.join(os.path.relpath(dir_, dir_path), f), './'),
-                                      'size': sizeof_fmt(f_data.st_size),
-                                      'modified': str(datetime.fromtimestamp(f_data.st_mtime))})
+                    relative_path = os.path.relpath(os.path.join(os.path.relpath(dir_, dir_path), f), './')
+                    if not relative_path.startswith('.'):
+                        file_list.append({'filename': relative_path,
+                                          'size': sizeof_fmt(f_data.st_size),
+                                          'modified': str(datetime.fromtimestamp(f_data.st_mtime))})
         return file_list
 
     def min_metadata(self):
