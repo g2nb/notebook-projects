@@ -457,8 +457,12 @@ class UserHandler(HubOAuthenticated, BaseHandler):
 
     @authenticated
     def get(self):
-        user = self.get_current_user()
-        username = user['name']
+        try:
+            user = self.get_current_user()
+            username = user['name']
+        except:
+            self.send_error(503, reason='JupyterHub API error retrieving user data')
+            return
 
         # Load the user spawners and put them in the format needed for the endpoint
         spawners = user_spawners(username)

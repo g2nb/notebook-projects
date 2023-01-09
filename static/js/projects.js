@@ -1518,6 +1518,22 @@ class Messages {
         )
     }
 
+    static warning_message(message) {
+        Messages.scroll_to_top();
+        Messages.hide_loading();
+
+        $('#messages').empty().append(
+            $(`<div class="alert alert-warning">${message}</div>`)
+        )
+    }
+
+    static clear_message() {
+        Messages.scroll_to_top();
+        Messages.hide_loading();
+
+        $('#messages').empty();
+    }
+
     static show_loading() {
         // Lazily create the loading dialog
         if (!this.loading_dialog) {
@@ -1578,13 +1594,28 @@ class MyProjects {
                 GenePattern.projects.images = response['images'];
                 GenePattern.projects.my_projects = [];                          // Clean the my_projects list
                 response['projects'].forEach((p) => GenePattern.projects.my_projects.push(new Project(p)));
+                return { error: false };
             })
+            .catch((error) => {
+                // Likely 503 error was encountered populating user.json, wait 10 seconds and try again
+                Messages.warning_message('The workspace is taking longer than usual to load your notebooks. Please by patient. If the problem persists, log out and log back in again.');
+                setTimeout(() => {
+                    Messages.clear_message();
+                    MyProjects.redraw_projects(null)
+                        .then(() => Shares.redraw_shares(null, false)
+                            .then(() => MyProjects.link_shared()))
+                        .then(() => Library.redraw_library(null, false)
+                            .then(() => MyProjects.link_published()));
+                }, 10000);
+                return { error: true };
+            });
     }
 
     static redraw_projects(message=null, query=true) {
         if (message) Messages.success_message(message);
         const previously_checked = MyProjects.checked().map(e => e.slug());
-        return MyProjects.query_projects(query).then(() => {
+        return MyProjects.query_projects(query).then((result) => {
+            if (result && result.error) return;
             const list_view = MyProjects.list_view();
             MyProjects.sort_projects();                                                     // Sort projects
             document.querySelector('#projects').innerHTML = '';                    // Empty the projects div
