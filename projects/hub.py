@@ -1,5 +1,6 @@
 import json
 import os
+import threading
 import requests
 from dockerspawner import SwarmSpawner
 from jupyterhub.handlers import BaseHandler
@@ -183,6 +184,20 @@ def pre_spawn_hook(spawner, userdir=''):
 
     os.chmod(project_dir, 0o777)  # chmod the directory
     write_manifest(project_dir, spawner.user.name, spawner.name, spawner)  # Lazily update the project manifest
+    usage_tracker('project_launch', description=f'{spawner.user.name}|{spawner.name}')  # Log project launch
+
+
+def usage_tracker(event_token, description='', endpoint='https://workspace.g2nb.org/services/usage/'):
+    """We maintain a basic counter of how many times our projects are launched; this helps us secure funding."""
+
+    # Call the usage tracker endpoint, don't break aything if there is any kind of error at all
+    def make_request_async():
+        try: requests.get(f'{endpoint}{event_token}/', data=description)
+        except: pass
+
+    # Ping the usage tracker in its own thread, so as not to make the user wait
+    usage_thread = threading.Thread(target=make_request_async)
+    usage_thread.start()
 
 
 def spawner_escape(text):
