@@ -1840,6 +1840,14 @@ class MyProjects {
         }, 1000 * 60);     // Refresh the list every minute
     }
 
+    static blank_workspace() {
+        let blank = true;
+        GenePattern.projects.my_projects.forEach(p => {
+            if (!p.slug().includes('.')) blank = false;
+        });
+        return blank;
+    }
+
     static list_view() {
         return $('#nb-view input[name=view]:checked').val() === 'list';
     }
@@ -1941,6 +1949,7 @@ class Library {
         return Library.query_library(query).then(() => {
             const list_view = MyProjects.list_view();
             Library.sort_projects();
+            Library.lazily_add_tutorial();                                         // Give new users the tutorial
             document.querySelector('#library').innerHTML = '';             // Empty the library div
             GenePattern.projects.library.forEach((p) =>                         // Add the project widgets
                 document.querySelector('#library').append(p.prepare_view(list_view)));
@@ -2015,6 +2024,24 @@ class Library {
                 else project.style.display = 'none';
             });
         });
+    }
+
+    static lazily_add_tutorial() {
+        // If you have no projects, copy the tutorial to your workspace
+        if (MyProjects.blank_workspace()) {
+            // Make the call to copy the project
+            $.ajax({
+                method: 'POST',
+                url: '/services/projects/library/34/',
+                contentType: 'application/json',
+                success: () => {
+                    MyProjects.redraw_projects(`Welcome to the g2nb Workspace! Start by viewing the tutorial or creating your own notebook project.`);
+                },
+                error: () => {
+                    Messages.hide_loading();
+                }
+            });
+        }
     }
 
     static sort_projects() {

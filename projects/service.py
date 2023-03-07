@@ -467,9 +467,16 @@ class UserHandler(HubOAuthenticated, BaseHandler):
         # Load the user spawners and put them in the format needed for the endpoint
         spawners = user_spawners(username)
         projects = []
+
         for s in spawners:
             if s[0] == '': continue  # Skip the user default spawner
-            metadata = json.loads(s[2])
+
+            # Attempt to load JSON data
+            try: metadata = json.loads(s[2])
+            except TypeError: metadata = {}
+            try: status = json.loads(s[1])
+            except TypeError: status = {}
+
             projects.append({
                 'slug': s[0],
                 'active': s[4] is not None,
@@ -481,7 +488,7 @@ class UserHandler(HubOAuthenticated, BaseHandler):
                 'quality': metadata['quality'] if 'quality' in metadata else '',
                 'citation': metadata['citation'] if 'citation' in metadata else '',
                 'tags': metadata['tags'] if 'tags' in metadata else '',
-                'status': json.loads(s[1]),
+                'status': status,
                 'name': s[0],                   # Retained for backwards compatibility with 21.02 release
                 'metadata': metadata            # Retained for backwards compatibility with 21.02 release
             })
