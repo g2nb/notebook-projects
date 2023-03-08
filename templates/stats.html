@@ -1,5 +1,17 @@
 {% extends "page.html" %}
 
+{% block scripts %}
+    <style>
+        .nb-count {
+            width: 75px;
+        }
+        .nb-table-cell {
+            width: 50%;
+        }
+    </style>
+    {{ super() }}
+{% endblock %}
+
 {% block main %}
     <div class="container">
         <div id="messages"></div>
@@ -7,7 +19,10 @@
         <ul class="nav nav-tabs" role="tablist">
             <li role="presentation" class="active"><a href="#projects" aria-controls="home" role="tab" data-toggle="tab">Top Projects</a></li>
             <li role="presentation"><a href="#updates" aria-controls="home" role="tab" data-toggle="tab">Project Updates</a></li>
-            <li role="presentation" onclick="stats_page.init_usage_tab()"><a href="#usage" aria-controls="home" role="tab" data-toggle="tab">Usage Tracking</a></li>
+            <li role="presentation" onclick="stats_page.init_usage_tab()"><a href="#launches" aria-controls="home" role="tab" data-toggle="tab">Project Launches</a></li>
+            <li role="presentation" onclick="stats_page.init_usage_tab()"><a href="#tools" aria-controls="home" role="tab" data-toggle="tab">Tool Runs</a></li>
+            <li role="presentation" onclick="stats_page.init_usage_tab()"><a href="#starts" aria-controls="home" role="tab" data-toggle="tab">Environment Starts</a></li>
+            <li role="presentation" onclick="stats_page.init_usage_tab()"><a href="#other" aria-controls="home" role="tab" data-toggle="tab">Other Events</a></li>
         </ul>
 
         <div class="tab-content">
@@ -36,17 +51,81 @@
                     <tbody id="nb-latest-updates"></tbody>
                 </table>
             </div>
-            <div role="tabpanel" class="tab-pane" id="usage">
-                <h1>Usage Tracking</h1>
+            <div role="tabpanel" class="tab-pane" id="tools">
+                <h1>Tool Runs</h1>
+                <div class="alert lead">
+                    <div class="pull-right"><strong>Latest:</strong> <span id="nb-usage-tools-latest"></span></div>
+                    <strong>Count:</strong> <span id="nb-usage-tools-count"></span>
+                </div>
+                <blockquote>These events are logged each time a g2nb tool runs using the nbtools framework. This
+                    includes the UI Builder, GenePattern, Cytoscap widget, IGV widget, etc. Tools are grouped by origin,
+                    which is an abstract indicator of from where the tool was loaded.</blockquote>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Origin</th>
+                            <th class="nb-count">Tools</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nb-usage-tools"></tbody>
+                </table>
+            </div>
+            <div role="tabpanel" class="tab-pane" id="launches">
+                <h1>Project Launches</h1>
+                <div class="alert lead">
+                    <div class="pull-right"><strong>Latest:</strong> <span id="nb-usage-launches-latest"></span></div>
+                    <strong>Count:</strong> <span id="nb-usage-launches-count"></span>
+                </div>
+                <blockquote>These events are triggered each time a user launches a project from their workspace. The
+                    project is listed as its slug, as this is each project's unique identifier on the file system and in
+                    the projects database.</blockquote>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Projects</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nb-usage-launches"></tbody>
+                </table>
+            </div>
+            <div role="tabpanel" class="tab-pane" id="starts">
+                <h1>g2nb Environment Starts</h1>
+                <div class="alert lead">
+                    <div class="pull-right"><strong>Latest:</strong> <span id="nb-usage-labext-latest"></span></div>
+                    <strong>Count:</strong> <span id="nb-usage-labext-count"></span>
+                </div>
+                <blockquote>These events get logged each time a JupyterLab environment starts up with g2nb extensions
+                    installed. On the g2nb workspace this corresponds to project launches, but it can also help us track
+                    g2nb use in users' personal machines or elsewhere.</blockquote>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Domain</th>
+                            <th class="nb-count">Count</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nb-usage-labext"></tbody>
+                </table>
+            </div>
+            <div role="tabpanel" class="tab-pane" id="other">
+                <h1>Other Events</h1>
+                <div class="alert lead">
+                    <div class="pull-right"><strong>Latest:</strong> <span id="nb-usage-other-latest"></span></div>
+                    <strong>Count:</strong> <span id="nb-usage-other-count"></span>
+                </div>
+                <blockquote>These events include anything logged in our database, but which doesn't match any of the
+                    known event types handled elsewhere.</blockquote>
                 <table class="table table-striped">
                     <thead>
                         <tr>
                             <th>Event</th>
-                            <th>Description</th>
-                            <th>Logged</th>
+                            <th>Descriptions</th>
+                            <th>Count</th>
+                            <th>Latest</th>
                         </tr>
                     </thead>
-                    <tbody id="nb-usage-events"></tbody>
+                    <tbody id="nb-usage-other"></tbody>
                 </table>
             </div>
         </div>

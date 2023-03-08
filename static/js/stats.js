@@ -22,11 +22,14 @@ class Stats {
     }
 
     init_usage_tab() {
-        Stats.query_usage_events().then(() => Stats.compile_usage_stats().then(() => Stats.draw_events_table()));
+        if (!this.initialized) {
+            Stats.query_usage_events().then(() => Stats.compile_usage_stats().then(() => Stats.draw_events_table()));
+            this.initialized = true;
+        }
     }
 
     static query_usage_events() {
-        return fetch(`https://workspace.g2nb.org/services/usage/report/`)
+        return fetch(`/services/usage/report/`)
             .then(response => response.json())
             .then(response => {
                 GenePattern.stats.usage_events = response['events'];
@@ -135,10 +138,54 @@ class Stats {
     }
 
     static draw_events_table() {
-        // Initialize the usage events table
-        GenePattern.stats.usage_events.forEach(event => {
-            $('#nb-usage-events').append(`<tr><td>${event.event_token}</td><td>${event.description}</td><td>${event.created}</td></tr>`);
-        });
+        // Initialize the tools section
+        $('#nb-usage-tools-count').text(GenePattern.stats.event_stats['tool_run'].count);
+        $('#nb-usage-tools-latest').text(GenePattern.stats.event_stats['tool_run'].latest.toUTCString());
+        for (const origin in GenePattern.stats.event_stats['tool_run'].origins) {
+            let tools_table = `<table class="table table-condensed"><tr><th>Tool</th><th class="nb-count">Count</th></tr>`;
+            for (const tool in GenePattern.stats.event_stats['tool_run'].origins[origin]) {
+                tools_table += `<tr><td>${tool}</td><td>${GenePattern.stats.event_stats['tool_run'].origins[origin][tool].count}</td></tr>`;
+            }
+            tools_table += '</table>';
+            $('#nb-usage-tools').append(`<tr><td><strong>${origin}</strong></td><td class="nb-table-cell">${tools_table}</td></tr>`);
+        }
+
+        // Initialize the project launches section
+        $('#nb-usage-launches-count').text(GenePattern.stats.event_stats['project_launch'].count);
+        $('#nb-usage-launches-latest').text(GenePattern.stats.event_stats['project_launch'].latest.toUTCString());
+        for (const user in GenePattern.stats.event_stats['project_launch'].users) {
+            let projects_table = `<table class="table table-condensed"><tr><th>Project</th><th class="nb-count">Count</th></tr>`;
+            for (const slug in GenePattern.stats.event_stats['project_launch'].users[user]) {
+                projects_table += `<tr><td>${slug}</td><td>${GenePattern.stats.event_stats['project_launch'].users[user][slug].count}</td></tr>`;
+            }
+            projects_table += '</table>';
+            $('#nb-usage-launches').append(`<tr><td><strong>${user}</strong></td><td class="nb-table-cell">${projects_table}</td></tr>`);
+        }
+
+        // Initialize labextension_load section
+        $('#nb-usage-labext-count').text(GenePattern.stats.event_stats['labextension_load'].count);
+        $('#nb-usage-labext-latest').text(GenePattern.stats.event_stats['labextension_load'].latest.toUTCString());
+        for (const domain in GenePattern.stats.event_stats['labextension_load'].domains) {
+            $('#nb-usage-labext').append(`<tr><td>${domain}</td><td>${GenePattern.stats.event_stats['labextension_load'].domains[domain].count}</td></tr>`);
+        }
+
+        // Initialize the other events section
+        const other_events = {};
+        let total_count = 0;
+        let overall_latest = 0;
+        for (const token in GenePattern.stats.event_stats) {
+            if (token !== 'tool_run' && token !== 'project_launch' && token !== 'labextension_load') {
+                other_events[token] = GenePattern.stats.event_stats[token];
+                total_count += GenePattern.stats.event_stats[token].count;
+                if (GenePattern.stats.event_stats[token].latest > overall_latest)
+                    overall_latest = GenePattern.stats.event_stats[token].latest;
+            }
+        }
+        $('#nb-usage-other-count').text(total_count);
+        $('#nb-usage-other-latest').text(overall_latest.toUTCString());
+        for (const event_type in other_events) {
+            $('#nb-usage-other').append(`<tr><td>${event_type}</td><td>${other_events[event_type].descriptions}</td>\<td>${other_events[event_type].count}</td><td>${other_events[event_type].latest.toUTCString()}</td></tr>`);
+        }
     }
 }
 
