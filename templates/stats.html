@@ -3,38 +3,54 @@
 {% block main %}
     <div class="container">
         <div id="messages"></div>
-        <h1>Top 100 Copied Projects</h1>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Project</th>
-                    <th># Copied</th>
-                </tr>
-            </thead>
-            <tbody id="nb-most-copied"></tbody>
-        </table>
-        <h1>Latest 1000 Updates</h1>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Project</th>
-                    <th>Comment</th>
-                    <th>Updated</th>
-                </tr>
-            </thead>
-            <tbody id="nb-latest-updates"></tbody>
-        </table>
-        <h1>Usage Tracking</h1>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Event</th>
-                    <th>Description</th>
-                    <th>Logged</th>
-                </tr>
-            </thead>
-            <tbody id="nb-usage-events"></tbody>
-        </table>
+
+        <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation" class="active"><a href="#projects" aria-controls="home" role="tab" data-toggle="tab">Top Projects</a></li>
+            <li role="presentation"><a href="#updates" aria-controls="home" role="tab" data-toggle="tab">Project Updates</a></li>
+            <li role="presentation" onclick="stats_page.init_usage_tab()"><a href="#usage" aria-controls="home" role="tab" data-toggle="tab">Usage Tracking</a></li>
+        </ul>
+
+        <div class="tab-content">
+            <div role="tabpanel" class="tab-pane active" id="projects">
+                <h1>Top 100 Copied Projects</h1>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Project</th>
+                            <th># Copied</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nb-most-copied"></tbody>
+                </table>
+            </div>
+            <div role="tabpanel" class="tab-pane" id="updates">
+                <h1>Latest 1000 Project Updates</h1>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Project</th>
+                            <th>Comment</th>
+                            <th>Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nb-latest-updates"></tbody>
+                </table>
+            </div>
+            <div role="tabpanel" class="tab-pane" id="usage">
+                <h1>Usage Tracking</h1>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>Description</th>
+                            <th>Logged</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nb-usage-events"></tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 {% endblock %}
 

@@ -8,7 +8,7 @@ class Stats {
     constructor() {
         // Query the stats endpoint and render the tables
         Stats.query_project_stats().then(() => Stats.draw_project_tables());
-        Stats.query_usage_events().then(() => Stats.draw_events_table());
+
     }
 
     static query_project_stats() {
@@ -18,6 +18,10 @@ class Stats {
                 GenePattern.stats.project_updates = response['updates'];
                 GenePattern.stats.project_runs = response['usage'];
             });
+    }
+
+    init_usage_tab() {
+        Stats.query_usage_events().then(() => Stats.draw_events_table());
     }
 
     static query_usage_events() {
@@ -52,4 +56,4 @@ class Stats {
     }
 }
 
-new Stats();
+window.stats_page = new Stats();
