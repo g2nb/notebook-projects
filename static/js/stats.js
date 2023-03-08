@@ -138,13 +138,16 @@ class Stats {
     }
 
     static draw_events_table() {
+        const alpha_sort = (a, b) => a.toLowerCase().localeCompare(b.toLowerCase());
+        const count_sort = (a, b) => a[1].count > b[1].count ? -1 : (a[1].count < b[1].count ? 1 : 0);
+
         // Initialize the tools section
         $('#nb-usage-tools-count').text(GenePattern.stats.event_stats['tool_run'].count);
         $('#nb-usage-tools-latest').text(GenePattern.stats.event_stats['tool_run'].latest.toUTCString());
-        for (const origin in GenePattern.stats.event_stats['tool_run'].origins) {
+        for (const origin of Object.keys(GenePattern.stats.event_stats['tool_run'].origins).sort(alpha_sort)) {
             let tools_table = `<table class="table table-condensed"><tr><th>Tool</th><th class="nb-count">Count</th></tr>`;
-            for (const tool in GenePattern.stats.event_stats['tool_run'].origins[origin]) {
-                tools_table += `<tr><td>${tool}</td><td>${GenePattern.stats.event_stats['tool_run'].origins[origin][tool].count}</td></tr>`;
+            for (const [tool, value] of Object.entries(GenePattern.stats.event_stats['tool_run'].origins[origin]).sort(count_sort)) {
+                tools_table += `<tr><td>${tool}</td><td>${value.count}</td></tr>`;
             }
             tools_table += '</table>';
             $('#nb-usage-tools').append(`<tr><td><strong>${origin}</strong></td><td class="nb-table-cell">${tools_table}</td></tr>`);
@@ -153,10 +156,10 @@ class Stats {
         // Initialize the project launches section
         $('#nb-usage-launches-count').text(GenePattern.stats.event_stats['project_launch'].count);
         $('#nb-usage-launches-latest').text(GenePattern.stats.event_stats['project_launch'].latest.toUTCString());
-        for (const user in GenePattern.stats.event_stats['project_launch'].users) {
+        for (const user of Object.keys(GenePattern.stats.event_stats['project_launch'].users).sort(alpha_sort)) {
             let projects_table = `<table class="table table-condensed"><tr><th>Project</th><th class="nb-count">Count</th></tr>`;
-            for (const slug in GenePattern.stats.event_stats['project_launch'].users[user]) {
-                projects_table += `<tr><td>${slug}</td><td>${GenePattern.stats.event_stats['project_launch'].users[user][slug].count}</td></tr>`;
+            for (const [slug, value] of Object.entries(GenePattern.stats.event_stats['project_launch'].users[user]).sort(count_sort)) {
+                projects_table += `<tr><td>${slug}</td><td>${value.count}</td></tr>`;
             }
             projects_table += '</table>';
             $('#nb-usage-launches').append(`<tr><td><strong>${user}</strong></td><td class="nb-table-cell">${projects_table}</td></tr>`);
