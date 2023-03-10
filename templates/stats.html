@@ -8,6 +8,10 @@
         .nb-table-cell {
             width: 50%;
         }
+        .nb-filter {
+            position: relative;
+            top: -3px;
+        }
     </style>
     {{ super() }}
 {% endblock %}
@@ -54,7 +58,11 @@
             <div role="tabpanel" class="tab-pane" id="tools">
                 <h1>Tool Runs</h1>
                 <div class="alert lead">
-                    <div class="pull-right"><strong>Latest:</strong> <span id="nb-usage-tools-latest"></span></div>
+                    <div class="pull-right">
+                        <label for="nb-usage-tools-from">From</label> <input id="nb-usage-tools-from" class="nb-from" type="date" value="" />,
+                        <label for="nb-usage-tools-to">To</label> <input id="nb-usage-tools-to" class="nb-to" type="date" value="" />
+                        <button class="btn btn-primary nb-filter" onclick="stats_page.filter_usage_events(event)">Filter</button>
+                    </div>
                     <strong>Count:</strong> <span id="nb-usage-tools-count"></span>
                 </div>
                 <blockquote>These events are logged each time a g2nb tool runs using the nbtools framework. This
@@ -73,7 +81,11 @@
             <div role="tabpanel" class="tab-pane" id="launches">
                 <h1>Project Launches</h1>
                 <div class="alert lead">
-                    <div class="pull-right"><strong>Latest:</strong> <span id="nb-usage-launches-latest"></span></div>
+                    <div class="pull-right">
+                        <label for="nb-usage-launches-from">From</label> <input id="nb-usage-launches-from" class="nb-from" type="date" value="" />,
+                        <label for="nb-usage-launches-to">To</label> <input id="nb-usage-launches-to" class="nb-to" type="date" value="" />
+                        <button class="btn btn-primary nb-filter" onclick="stats_page.filter_usage_events(event)">Filter</button>
+                    </div>
                     <strong>Count:</strong> <span id="nb-usage-launches-count"></span>
                 </div>
                 <blockquote>These events are triggered each time a user launches a project from their workspace. The
@@ -92,7 +104,11 @@
             <div role="tabpanel" class="tab-pane" id="starts">
                 <h1>g2nb Environment Starts</h1>
                 <div class="alert lead">
-                    <div class="pull-right"><strong>Latest:</strong> <span id="nb-usage-labext-latest"></span></div>
+                    <div class="pull-right">
+                        <label for="nb-usage-labext-from">From</label> <input id="nb-usage-labext-from" class="nb-from" type="date" value="" />,
+                        <label for="nb-usage-labext-to">To</label> <input id="nb-usage-labext-to" class="nb-to" type="date" value="" />
+                        <button class="btn btn-primary nb-filter" onclick="stats_page.filter_usage_events(event)">Filter</button>
+                    </div>
                     <strong>Count:</strong> <span id="nb-usage-labext-count"></span>
                 </div>
                 <blockquote>These events get logged each time a JupyterLab environment starts up with g2nb extensions
@@ -111,7 +127,11 @@
             <div role="tabpanel" class="tab-pane" id="other">
                 <h1>Other Events</h1>
                 <div class="alert lead">
-                    <div class="pull-right"><strong>Latest:</strong> <span id="nb-usage-other-latest"></span></div>
+                    <div class="pull-right">
+                        <label for="nb-usage-other-from">From</label> <input id="nb-usage-other-from" class="nb-from" type="date" value="" />,
+                        <label for="nb-usage-other-to">To</label> <input id="nb-usage-other-to" class="nb-to" type="date" value="" />
+                        <button class="btn btn-primary nb-filter" onclick="stats_page.filter_usage_events(event)">Filter</button>
+                    </div>
                     <strong>Count:</strong> <span id="nb-usage-other-count"></span>
                 </div>
                 <blockquote>These events include anything logged in our database, but which doesn't match any of the

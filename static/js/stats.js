@@ -28,6 +28,28 @@ class Stats {
         }
     }
 
+    filter_usage_events(event) {
+        // Get the date tange
+        const from = new Date($(event.target).parent().find('.nb-from').val());
+        let to = new Date($(event.target).parent().find('.nb-to').val());
+        to.setDate(to.getDate() + 1); // Correct date range for UTC time zone issues
+
+        // Reset event stats
+        GenePattern.stats.event_stats = {};
+
+        // Recompile stats based on range
+        Stats.compile_usage_stats(from, to).then(() => {
+            // Clear the tables
+            $('#nb-usage-tools').empty();
+            $('#nb-usage-launches').empty();
+            $('#nb-usage-labext').empty();
+            $('#nb-usage-other').empty();
+
+            // Draw the updated tables
+            Stats.draw_events_table();
+        })
+    }
+
     static query_usage_events() {
         return fetch(`/services/usage/report/`)
             .then(response => response.json())
@@ -36,21 +58,32 @@ class Stats {
             });
     }
 
-    static compile_usage_stats() {
+    static compile_usage_stats(from=null, to=null) {
         return new Promise((resolve, reject) => {
             GenePattern.stats.usage_events.forEach(e => {
-                if (e.event_token === '') e.event_token = 'unknown'; // Special case for unknown tokens
+                // Filter events out of the date range if one is specified
+                const created = new Date(e.created);
+                if (!!from && created < from) return;
+                if (!!to && created > to) return;
+
+                // Special case for unknown tokens
+                if (e.event_token === '') e.event_token = 'unknown';
 
                 // Lazily initialize event_stats and increment counts for each event_token
                 if (e.event_token in GenePattern.stats.event_stats) GenePattern.stats.event_stats[e.event_token].count++;
                 else GenePattern.stats.event_stats[e.event_token] = {count: 1};
 
                 // Note the latest time the event happened
-                const created = new Date(e.created);
                 if (!GenePattern.stats.event_stats[e.event_token].latest)
                     GenePattern.stats.event_stats[e.event_token].latest = created;
                 else if (GenePattern.stats.event_stats[e.event_token].latest < created)
                     GenePattern.stats.event_stats[e.event_token].latest = created;
+
+                // Note the earliest time the event happened
+                if (!GenePattern.stats.event_stats[e.event_token].earliest)
+                    GenePattern.stats.event_stats[e.event_token].earliest = created;
+                else if (GenePattern.stats.event_stats[e.event_token].earliest > created)
+                    GenePattern.stats.event_stats[e.event_token].earliest = created;
 
                 // Special parsing for tool_run
                 if (e.event_token === 'tool_run') {
@@ -117,6 +150,11 @@ class Stats {
                 }
             });
 
+            // Ensure that the expected event types have at least been initialized
+            if (!GenePattern.stats.event_stats['tool_run']) GenePattern.stats.event_stats['tool_run'] = { count: 0, origins: [] };
+            if (!GenePattern.stats.event_stats['project_launch']) GenePattern.stats.event_stats['project_launch'] = { count: 0, users: [] };
+            if (!GenePattern.stats.event_stats['labextension_load']) GenePattern.stats.event_stats['labextension_load'] = { count: 0, domains: [] };
+
             resolve();
         });
     }
@@ -143,7 +181,8 @@ class Stats {
 
         // Initialize the tools section
         $('#nb-usage-tools-count').text(GenePattern.stats.event_stats['tool_run'].count);
-        $('#nb-usage-tools-latest').text(GenePattern.stats.event_stats['tool_run'].latest.toUTCString());
+        $('#nb-usage-tools-from').val(GenePattern.stats.event_stats['tool_run'].earliest?.toISOString().split('T')[0]);
+        $('#nb-usage-tools-to').val(GenePattern.stats.event_stats['tool_run'].latest?.toISOString().split('T')[0]);
         for (const origin of Object.keys(GenePattern.stats.event_stats['tool_run'].origins).sort(alpha_sort)) {
             let tools_table = `<table class="table table-condensed"><tr><th>Tool</th><th class="nb-count">Count</th></tr>`;
             for (const [tool, value] of Object.entries(GenePattern.stats.event_stats['tool_run'].origins[origin]).sort(count_sort)) {
@@ -155,7 +194,8 @@ class Stats {
 
         // Initialize the project launches section
         $('#nb-usage-launches-count').text(GenePattern.stats.event_stats['project_launch'].count);
-        $('#nb-usage-launches-latest').text(GenePattern.stats.event_stats['project_launch'].latest.toUTCString());
+        $('#nb-usage-launches-from').val(GenePattern.stats.event_stats['project_launch'].earliest?.toISOString().split('T')[0]);
+        $('#nb-usage-launches-to').val(GenePattern.stats.event_stats['project_launch'].latest?.toISOString().split('T')[0]);
         for (const user of Object.keys(GenePattern.stats.event_stats['project_launch'].users).sort(alpha_sort)) {
             let projects_table = `<table class="table table-condensed"><tr><th>Project</th><th class="nb-count">Count</th></tr>`;
             for (const [slug, value] of Object.entries(GenePattern.stats.event_stats['project_launch'].users[user]).sort(count_sort)) {
@@ -167,7 +207,8 @@ class Stats {
 
         // Initialize labextension_load section
         $('#nb-usage-labext-count').text(GenePattern.stats.event_stats['labextension_load'].count);
-        $('#nb-usage-labext-latest').text(GenePattern.stats.event_stats['labextension_load'].latest.toUTCString());
+        $('#nb-usage-labext-from').val(GenePattern.stats.event_stats['labextension_load'].earliest?.toISOString().split('T')[0]);
+        $('#nb-usage-labext-to').val(GenePattern.stats.event_stats['labextension_load'].latest?.toISOString().split('T')[0]);
         for (const domain in GenePattern.stats.event_stats['labextension_load'].domains) {
             $('#nb-usage-labext').append(`<tr><td>${domain}</td><td>${GenePattern.stats.event_stats['labextension_load'].domains[domain].count}</td></tr>`);
         }
@@ -175,17 +216,21 @@ class Stats {
         // Initialize the other events section
         const other_events = {};
         let total_count = 0;
-        let overall_latest = 0;
+        let overall_latest = new Date('2020-01-01');
+        let overall_earliest = new Date();
         for (const token in GenePattern.stats.event_stats) {
             if (token !== 'tool_run' && token !== 'project_launch' && token !== 'labextension_load') {
                 other_events[token] = GenePattern.stats.event_stats[token];
                 total_count += GenePattern.stats.event_stats[token].count;
                 if (GenePattern.stats.event_stats[token].latest > overall_latest)
                     overall_latest = GenePattern.stats.event_stats[token].latest;
+                if (GenePattern.stats.event_stats[token].earliest < overall_earliest)
+                    overall_earliest = GenePattern.stats.event_stats[token].earliest;
             }
         }
         $('#nb-usage-other-count').text(total_count);
-        $('#nb-usage-other-latest').text(overall_latest.toUTCString());
+        $('#nb-usage-other-from').val(overall_earliest?.toISOString().split('T')[0]);
+        $('#nb-usage-other-to').val(overall_latest?.toISOString().split('T')[0]);
         for (const event_type in other_events) {
             $('#nb-usage-other').append(`<tr><td>${event_type}</td><td>${other_events[event_type].descriptions}</td>\<td>${other_events[event_type].count}</td><td>${other_events[event_type].latest.toUTCString()}</td></tr>`);
         }
