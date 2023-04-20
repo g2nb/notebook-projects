@@ -680,6 +680,11 @@ class Project {
 class PublishedProject extends Project {
     linked = null;  // Reference to linked personal project, if you are the owner
 
+    constructor(project_json) {
+        super(project_json);
+        this.attach_copies();
+    }
+
     display_name() {
         return this.model.name;
     }
@@ -702,6 +707,15 @@ class PublishedProject extends Project {
 
     owner() {
         return this.model.owner;
+    }
+
+    attach_copies() {
+        const copies = this.number_of_copies();
+        if (!!copies) {
+            const suffix = copies === 1 ? 'y' : 'ies';
+            $(this.element).find('.panel-title').append(' ')
+                .append($(`<div class="badge nb-copies" title="You have ${copies} existing cop${suffix} of this project.">${copies} cop${suffix}</div>`));
+        }
     }
 
     build_gear_menu() {
@@ -769,6 +783,16 @@ class PublishedProject extends Project {
                 });
             }
         });
+    }
+
+    number_of_copies() {
+        // Check for how many copies of the project exists in my projects
+        let copies_found = 0
+        const reg = new RegExp(`^${this.slug()}[0-9]*$`);
+        GenePattern.projects.my_projects.forEach(p => {
+            if (reg.test(p.slug())) copies_found++;
+        });
+        return copies_found;
     }
 
     check_for_copy() {

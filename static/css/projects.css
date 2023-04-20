@@ -176,6 +176,12 @@
     width: calc(100% - 200px);
 }
 
+.nb-project .badge.nb-copies {
+    background-color: #777777;
+    position: relative;
+    top: -2px;
+}
+
 .nb-project-list > .panel-body > .panel-text {
     white-space: nowrap;
     overflow: hidden;
