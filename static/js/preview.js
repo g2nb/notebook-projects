@@ -37,7 +37,7 @@ class Preview {
         if (GenePattern.preview.personal) {
             $('#nb-preview-updated').parent().hide();
             $('#nb-preview-comment').parent().hide();
-            $('.nb-preview-buttons').hide();
+            $('#nb-preview-run').hide();
         }
 
         // Add tags
@@ -45,7 +45,7 @@ class Preview {
             .forEach(t => $('#nb-preview-tags').append($(`<span class="badge">${t}</span>`)).append('&nbsp;'));
 
         // Add button links
-        $('#nb-preview-download').attr('href', `/services/projects/library/${GenePattern.preview.id}/download/`);
+        $('#nb-preview-download').attr('href', `/services/projects/${GenePattern.preview.personal ? 'project' : 'library'}/${GenePattern.preview.id}/download/`);
         $('#nb-preview-run').attr('href', `/hub/login?next=%2Fservices%2Fprojects%2Flibrary%2F${GenePattern.preview.id}%2Fcopy%2F`);
 
         // Add files to the table
