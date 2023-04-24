@@ -99,6 +99,7 @@ class Project {
             .append($('<li><a href="#" class="dropdown-item nb-publish">Publish</a></li>'))
             .append($('<li><a href="#" class="dropdown-item nb-share">Share</a></li>'))
             .append($('<li><a href="#" class="dropdown-item nb-duplicate">Duplicate</a></li>'))
+            .append($('<li><a href="#" class="dropdown-item nb-download">Download</a></li>'))
             .append($('<li><a href="#" class="dropdown-item nb-stop">Stop</a></li>'))
             .append($('<li><a href="#" class="dropdown-item nb-delete">Delete</a></li>'));
 
@@ -108,6 +109,7 @@ class Project {
         $(this.element).find('.nb-edit').click(e => Project.not_disabled(e,() => this.edit_project()));
         $(this.element).find('.nb-preview').click(e => Project.not_disabled(e,() => this.preview_project()));
         $(this.element).find('.nb-duplicate').click(e => Project.not_disabled(e,() => this.duplicate_project()));
+        $(this.element).find('.nb-download').click(e => Project.not_disabled(e,() => this.download_project()));
         $(this.element).find('.nb-publish').click(e => Project.not_disabled(e,() => this.publish_project()));
         $(this.element).find('.nb-share').click(e => Project.not_disabled(e,() => this.share_project()));
 
@@ -253,6 +255,10 @@ class Project {
         else this.shared.share_url();                               // Endpoint with /<id>/ if published
     }
 
+    download_url() {
+        return `/services/projects/project/${this.slug()}/download/`;
+    }
+
     checked() {
         return this.element.querySelector('.nb-checkbox').checked;
     }
@@ -315,6 +321,10 @@ class Project {
 
     preview_project() {
         window.open(this.preview_url());
+    }
+
+    download_project() {
+        window.open(this.download_url());
     }
 
     duplicate_project() {

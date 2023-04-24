@@ -1,3 +1,4 @@
+import io
 import os
 import shutil
 import threading
@@ -33,3 +34,33 @@ def sizeof_fmt(num, suffix='B'):
             return "%3.0f%s%s" % (num, unit, suffix)
         num /= 1024.0
     return "%.1f%s%s" % (num, 'Yi', suffix)
+
+
+def get_dir_size(dir_path, size_limit=None):
+    total_size = 0
+    for root, dirs, files in os.walk(dir_path):
+        for f in files:
+            fp = os.path.join(root, f)
+            if not os.path.islink(fp):              # skip if it is symbolic link
+                total_size += os.path.getsize(fp)
+                # Abort if directory is over size limit
+                if size_limit and total_size > size_limit:
+                    raise RuntimeError('Exceeded maximum size limit')
+
+    return total_size
+
+
+def zip_buffer(dir_path):
+    buffer = io.BytesIO()                           # Create the buffer
+    path_prefix = len(os.path.dirname(dir_path))    # Number of characters in path prefix
+
+    # Write the directory contents to the buffer
+    with zipfile.ZipFile(buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+        for root, dirs, files in os.walk(dir_path):
+            for file in files:
+                full_path = os.path.join(root, file)
+                name_in_zip = full_path[path_prefix+1:]
+                zip_file.write(full_path, name_in_zip)
+
+    buffer.seek(0)                                  # Return buffer back to beginning of memory
+    return buffer                                   # Return the buffer

@@ -7,10 +7,12 @@ from jupyterhub.services.auth import HubOAuthenticated, HubOAuthCallbackHandler
 from .config import Config
 from .emails import send_published_email, validate_token
 from .errors import ExistsError, PermissionError, SpecError, InvalidProjectError, InviteError
-from .hub import create_named_server, user_spawners, decode_username, stop_named_server, delete_named_server
+from .hub import create_named_server, user_spawners, decode_username, stop_named_server, delete_named_server, \
+    usage_tracker
 from .project import Project, unused_dir
 from .publish import Publish, Tag, Update
 from .sharing import Share, Invite
+from .zip import zip_buffer, get_dir_size
 
 
 class BaseHandler(RequestHandler):
@@ -37,10 +39,14 @@ class ProjectHandler(HubOAuthenticated, BaseHandler):
 
     @addslash
     @authenticated
-    def get(self, id=None):
+    def get(self, id=None, directive=None):
         """Get the project's metadata or list of projects"""
-        if id is None: self._list_projects()        # List all personal projects
-        else: self._project_info(id)                # List a single project with the specified id
+        if id is None:                      # List all personal projects
+            self._list_projects()
+        elif directive is None:             # List a single project with the specified id
+            self._project_info(id)
+        elif directive == 'download':       # Return a download response for the zip
+            self._download_project(id)
 
     def _list_projects(self):
         user = self.current_username()
@@ -52,6 +58,28 @@ class ProjectHandler(HubOAuthenticated, BaseHandler):
         project = Project.get(owner=user, dir=dir)
         include_files = self.get_argument("files", None, True)
         self.write(project.json(include_files=include_files))
+
+    def _download_project(self, dir):
+        user = self.current_username()
+        project = Project.get(owner=user, dir=dir)
+        dir_path = project.dir_path()
+
+        # Check for max file size
+        try: get_dir_size(dir_path, size_limit=104857600)
+        except RuntimeError:
+            usage_tracker('project_export_error', description=f'{user}|{project.dir}')
+            self.send_error(413, reason='Project exceeds maximum export size')
+
+        # Write project contents to a zip and send to client
+        self.set_header('Content-Type', 'application/zip, application/octet-stream')
+        self.set_header('Content-Disposition', f'attachment; filename={project.dir}.zip')
+        zip = zip_buffer(dir_path)
+        while True:
+            data = zip.read(4096)
+            if not data:
+                break
+            self.write(data)
+        self.finish()
 
     @addslash
     def post(self, id=None):
