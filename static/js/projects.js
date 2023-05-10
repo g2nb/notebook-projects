@@ -1278,53 +1278,76 @@ class NewProject {
         return found_name;
     }
 
+    import_project() {
+        // Get the upload element, lazily creating it and adding it to the document if necessary
+        let import_upload = $(document).find('#import-project')
+        if (!import_upload.length) {
+            import_upload = $('<input type="file" id="import-project" accept="zip,application/zip" style="display: none;" />');
+            $(document.body).append(import_upload);
+            import_upload[0].addEventListener('change', e => {  // Attach the upload handler
+                // TODO: Implement
+                const zip = e.target.files[0];
+                alert(zip.name);
+            });
+        }
+
+        // Trigger the upload dialog
+        import_upload.trigger('click');
+    }
+
     create_project() {
         // Lazily create the new project dialog
         if (!this.project_dialog)
             this.project_dialog = new Modal('new-project-dialog', {
                 title: 'Create New Project',
                 body: Project.project_form_spec(null, ['author', 'quality', 'citation', 'tags']),
-                button_label: 'Create Project',
-                button_class: 'btn-success create-button',
-                callback: (form_data, e) => {
-                    // If required input is missing, highlight and wait
-                    if (this.project_dialog.missing_required()) return e.stopPropagation();
+                buttons: `
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <!--<button type="button" class="btn btn-default" data-dismiss="modal">Import Project</button>-->
+                        <button type="button" class="btn btn-success create-button" data-dismiss="modal">Create Project</button>`,
+                callback: [
+                    () => false,                                    // Cancel button
+                    // () => this.import_project(),                    // Launch old button
+                    (form_data, e) => {                             // Confirm copy button
+                        // If required input is missing, highlight and wait
+                        if (this.project_dialog.missing_required()) return e.stopPropagation();
 
-                    // Generate the slug
-                    let slug = form_data['name'].toLowerCase().replace(/[^A-Z0-9]+/ig, "_");
-                    if (slug.endsWith('_')) slug += 'project';  // Swarm doesn't like slugs that end in an underscore
+                        // Generate the slug
+                        let slug = form_data['name'].toLowerCase().replace(/[^A-Z0-9]+/ig, "_");
+                        if (slug.endsWith('_')) slug += 'project';  // Swarm doesn't like slugs that end in an underscore
 
-                    // Make sure there isn't already a project named this
-                    if (this.project_exists(slug)) {
-                        Messages.error_message('Please choose a different name. A project already exists with that name.');
-                        return;
+                        // Make sure there isn't already a project named this
+                        if (this.project_exists(slug)) {
+                            Messages.error_message('Please choose a different name. A project already exists with that name.');
+                            return;
+                        }
+
+                        // Show the loading spinner
+                        Messages.show_loading();
+
+                        // Make the AJAX request
+                        $.ajax({
+                            method: 'POST',
+                            url: this.api_url() + slug,
+                            contentType: 'application/json',
+                            data: JSON.stringify({
+                                "name": form_data['name'],
+                                "image": form_data['image'],
+                                "description": form_data['description'],
+                                "author": form_data['author'],
+                                "quality": form_data['quality'],
+                                "citation": form_data['citation'],
+                                "tags": Project.tags_to_string(form_data['tags'])
+                            }),
+                            success: () => {
+                                // Open the project and refresh the page
+                                window.open(this.get_url() + slug);
+                                MyProjects.redraw_projects(`${form_data['name']} project created.`);
+                            },
+                            error: () => Messages.error_message('Unable to create project.')
+                        });
                     }
-
-                    // Show the loading spinner
-                    Messages.show_loading();
-
-                    // Make the AJAX request
-                    $.ajax({
-                        method: 'POST',
-                        url: this.api_url() + slug,
-                        contentType: 'application/json',
-                        data: JSON.stringify({
-                            "name": form_data['name'],
-                            "image": form_data['image'],
-                            "description": form_data['description'],
-                            "author": form_data['author'],
-                            "quality": form_data['quality'],
-                            "citation": form_data['citation'],
-                            "tags": Project.tags_to_string(form_data['tags'])
-                        }),
-                        success: () => {
-                            // Open the project and refresh the page
-                            window.open(this.get_url() + slug);
-                            MyProjects.redraw_projects(`${form_data['name']} project created.`);
-                        },
-                        error: () => Messages.error_message('Unable to create project.')
-                    });
-                }
+                ]
             });
 
         // Show the delete dialog
@@ -1871,7 +1894,7 @@ class MyProjects {
                     .then(() => MyProjects.link_shared()))
                 .then(() => Library.redraw_library()
                     .then(() => MyProjects.link_published()));
-        }, 1000 * 60);     // Refresh the list every minute
+        }, 1000 * 60 * 16);     // Refresh the list every sixteen minutes
     }
 
     static blank_workspace() {
