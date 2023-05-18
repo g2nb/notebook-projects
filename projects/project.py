@@ -111,6 +111,9 @@ class Project(Base):
         }
         return Project(json.dumps(data))
 
+    def exists(self):
+        return Project.get(owner=self.owner, dir=self.dir) is not None
+
     @staticmethod
     def get(id=None, owner=None, dir=None):
         """Get project info from the projects database. If no info is found, fall back to querying the hub database"""

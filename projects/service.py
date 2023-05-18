@@ -40,7 +40,7 @@ class ProjectHandler(HubOAuthenticated, BaseHandler):
     @addslash
     @authenticated
     def get(self, id=None, directive=None):
-        """Get the project's metadata or list of projects"""
+        """Get the project's metadata, download or list of projects"""
         if id is None:                      # List all personal projects
             self._list_projects()
         elif directive is None:             # List a single project with the specified id
@@ -82,16 +82,39 @@ class ProjectHandler(HubOAuthenticated, BaseHandler):
         self.finish()
 
     @addslash
-    def post(self, id=None):
-        """Start or create a project"""
-        if id is None: self._create_project()       # Create a new project
-        else: self._start_project(id)               # Start the specified project
+    def post(self, id=None, directive=None):
+        """Start, import or create a project"""
+        if id is None: self._create()                   # Create a new project
+        elif directive is None: self._start_project(id)         # Start the specified project
+        elif directive == 'import': self._import_project(id)    # Import a project
 
-    def _create_project(self):
-        self.send_error(501, reason='Endpoint not yet implemented')  # TODO: Implement
+    def _create(self):
+        # TODO: This call hasn't been fully tested
+        try:
+            project = Project(to_basestring(self.request.body))       # Create a project from the request body
+            if project.exists():                                      # If the project already exists
+                raise ExistsError                                     # Throw an error
+            if not self._owner(project):                              # Ensure the correct username is set
+                raise PermissionError
+            url = create_named_server(self.hub_auth, project.owner, project.dir, project.json())  # Make the API request
+            project.save()                                            # Save the project to the database
+            self.write({'url': url, 'name': project.name})            # Return the project json
+        except SpecError as e:                                        # Bad Request
+            self.send_error(400, reason=f'Error creating project: {e}')
+        except ExistsError:                                           # Bad Request
+            self.send_error(400, reason='Error creating project, already exists, choose a new name')
+        except PermissionError:                                       # Forbidden
+            self.send_error(403, reason='You are not the owner of this project')
 
     def _start_project(self, id):
         self.send_error(501, reason='Endpoint not yet implemented')  # TODO: Implement
+
+    def _import_project(self, id):
+        self.send_error(501, reason='Endpoint not yet implemented')  # TODO: Implement
+
+    def _owner(self, project):
+        """Is the current user the owner of this project?"""
+        return project.owner == self.current_username()
 
     @addslash
     def put(self, id=None, directive=None):
