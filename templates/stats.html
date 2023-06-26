@@ -25,7 +25,8 @@
             <li role="presentation"><a href="#updates" aria-controls="home" role="tab" data-toggle="tab">Project Updates</a></li>
             <li role="presentation" onclick="stats_page.init_usage_tab()"><a href="#launches" aria-controls="home" role="tab" data-toggle="tab">Project Launches</a></li>
             <li role="presentation" onclick="stats_page.init_usage_tab()"><a href="#tools" aria-controls="home" role="tab" data-toggle="tab">Tool Runs</a></li>
-            <li role="presentation" onclick="stats_page.init_usage_tab()"><a href="#starts" aria-controls="home" role="tab" data-toggle="tab">Environment Starts</a></li>
+            <li role="presentation" onclick="stats_page.init_usage_tab()"><a href="#labstarts" aria-controls="home" role="tab" data-toggle="tab">Labext Starts</a></li>
+            <li role="presentation" onclick="stats_page.init_usage_tab()"><a href="#nbstarts" aria-controls="home" role="tab" data-toggle="tab">Nbext Starts</a></li>
             <li role="presentation" onclick="stats_page.init_usage_tab()"><a href="#other" aria-controls="home" role="tab" data-toggle="tab">Other Events</a></li>
         </ul>
 
@@ -101,8 +102,8 @@
                     <tbody id="nb-usage-launches"></tbody>
                 </table>
             </div>
-            <div role="tabpanel" class="tab-pane" id="starts">
-                <h1>g2nb Environment Starts</h1>
+            <div role="tabpanel" class="tab-pane" id="labstarts">
+                <h1>g2nb Lab Environment Starts</h1>
                 <div class="alert lead">
                     <div class="pull-right">
                         <label for="nb-usage-labext-from">From</label> <input id="nb-usage-labext-from" class="nb-from" type="date" value="" />,
@@ -122,6 +123,29 @@
                         </tr>
                     </thead>
                     <tbody id="nb-usage-labext"></tbody>
+                </table>
+            </div>
+            <div role="tabpanel" class="tab-pane" id="nbstarts">
+                <h1>Notebook Environment Starts</h1>
+                <div class="alert lead">
+                    <div class="pull-right">
+                        <label for="nb-usage-nbext-from">From</label> <input id="nb-usage-nbext-from" class="nb-from" type="date" value="" />,
+                        <label for="nb-usage-nbext-to">To</label> <input id="nb-usage-nbext-to" class="nb-to" type="date" value="" />
+                        <button class="btn btn-primary nb-filter" onclick="stats_page.filter_usage_events(event)">Filter</button>
+                    </div>
+                    <strong>Count:</strong> <span id="nb-usage-nbext-count"></span>
+                </div>
+                <blockquote>These events get logged each time a Jupyter Notebook environment starts up with GenePattern or g2nb extensions
+                    installed. On the GenePattern Notebook or g2nb workspaces this corresponds to project launches, but it can also help us track
+                    use on users' personal machines or elsewhere.</blockquote>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Domain</th>
+                            <th class="nb-count">Count</th>
+                        </tr>
+                    </thead>
+                    <tbody id="nb-usage-nbext"></tbody>
                 </table>
             </div>
             <div role="tabpanel" class="tab-pane" id="other">

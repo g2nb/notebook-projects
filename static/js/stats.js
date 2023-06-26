@@ -43,6 +43,7 @@ class Stats {
             $('#nb-usage-tools').empty();
             $('#nb-usage-launches').empty();
             $('#nb-usage-labext').empty();
+            $('#nb-usage-nbext').empty();
             $('#nb-usage-other').empty();
 
             // Draw the updated tables
@@ -143,6 +144,24 @@ class Stats {
                     else GenePattern.stats.event_stats[e.event_token].domains[url.hostname].count++;
                 }
 
+                // Special parsing for nbextension_load
+                else if (e.event_token === 'nbextension_load') {
+                    // Lazily initialize the list of domains
+                    if (!GenePattern.stats.event_stats[e.event_token].domains)
+                        GenePattern.stats.event_stats[e.event_token].domains = {};
+
+                    // Parse the description
+                    let url = null;
+                    try { url = new URL(e.description); }
+                    // Handle bad or misformatted URLs
+                    catch (e) { url = { hostname: 'BAD URL' }; }
+
+                    // Lazily initialize the specific domain or increment the count
+                    if (!GenePattern.stats.event_stats[e.event_token].domains[url.hostname])
+                        GenePattern.stats.event_stats[e.event_token].domains[url.hostname] = { count: 1 };
+                    else GenePattern.stats.event_stats[e.event_token].domains[url.hostname].count++;
+                }
+
                 // Handle other event_tokens
                 else {
                     // Lazily initialize the list of descriptions
@@ -214,6 +233,14 @@ class Stats {
         $('#nb-usage-labext-to').val(GenePattern.stats.event_stats['labextension_load'].latest?.toISOString().split('T')[0]);
         for (const domain in GenePattern.stats.event_stats['labextension_load'].domains) {
             $('#nb-usage-labext').append(`<tr><td>${domain}</td><td>${GenePattern.stats.event_stats['labextension_load'].domains[domain].count}</td></tr>`);
+        }
+
+        // Initialize nbextension_load section
+        $('#nb-usage-nbext-count').text(GenePattern.stats.event_stats['nbextension_load'].count);
+        $('#nb-usage-nbext-from').val(GenePattern.stats.event_stats['nbextension_load'].earliest?.toISOString().split('T')[0]);
+        $('#nb-usage-nbext-to').val(GenePattern.stats.event_stats['nbextension_load'].latest?.toISOString().split('T')[0]);
+        for (const domain in GenePattern.stats.event_stats['nbextension_load'].domains) {
+            $('#nb-usage-nbext').append(`<tr><td>${domain}</td><td>${GenePattern.stats.event_stats['nbextension_load'].domains[domain].count}</td></tr>`);
         }
 
         // Initialize the other events section
