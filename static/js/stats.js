@@ -132,11 +132,14 @@ class Stats {
                         GenePattern.stats.event_stats[e.event_token].domains = {};
 
                     // Parse the description
-                    const url = new URL(e.description)
+                    let url = null;
+                    try { url = new URL(e.description); }
+                    // Handle bad or misformatted URLs
+                    catch (e) { url = { hostname: 'BAD URL' }; }
 
                     // Lazily initialize the specific domain or increment the count
                     if (!GenePattern.stats.event_stats[e.event_token].domains[url.hostname])
-                        GenePattern.stats.event_stats[e.event_token].domains[url.hostname] = {count: 1};
+                        GenePattern.stats.event_stats[e.event_token].domains[url.hostname] = { count: 1 };
                     else GenePattern.stats.event_stats[e.event_token].domains[url.hostname].count++;
                 }
 
