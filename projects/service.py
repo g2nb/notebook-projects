@@ -8,10 +8,10 @@ from .config import Config
 from .emails import send_published_email, validate_token
 from .errors import ExistsError, PermissionError, SpecError, InvalidProjectError, InviteError
 from .hub import create_named_server, user_spawners, decode_username, stop_named_server, delete_named_server, \
-    usage_tracker
+    usage_tracker, lazily_create_dirs, shared_with_me
 from .project import Project, unused_dir
 from .publish import Publish, Tag, Update
-from .sharing import Share, Invite
+from .sharing import Share, Invite, encode_shared_name
 from .zip import zip_buffer, get_dir_size
 
 
@@ -62,17 +62,29 @@ class ProjectHandler(HubOAuthenticated, BaseHandler):
     def _download_project(self, dir):
         user = self.current_username()
         project = Project.get(owner=user, dir=dir)
-        dir_path = project.dir_path()
+        if project is None:
+            # Check if this is an un-initialized share, if so set the dir_path manually
+            if shared_with_me(dir): dir_path = os.path.join(Config.instance().USERS_PATH, user, dir)
+            # Otherwise, send an error and return
+            else:
+                self.send_error(404, reason='Unable to retrieve project')
+                return
+        else: dir_path = project.dir_path()
+
+        # Check if project directory exists, run pre_spawn_hook if not
+        if not os.path.exists(dir_path):
+            lazily_create_dirs(os.path.join(Config.instance().USERS_PATH, user), dir)
 
         # Check for max file size
         try: get_dir_size(dir_path, size_limit=104857600)
         except RuntimeError:
-            usage_tracker('project_export_error', description=f'{user}|{project.dir}')
+            usage_tracker('project_export_error', description=f'{user}|{dir}')
             self.send_error(413, reason='Project exceeds maximum export size')
+            return
 
         # Write project contents to a zip and send to client
         self.set_header('Content-Type', 'application/zip, application/octet-stream')
-        self.set_header('Content-Disposition', f'attachment; filename={project.dir}.zip')
+        self.set_header('Content-Disposition', f'attachment; filename={dir}.zip')
         zip = zip_buffer(dir_path)
         while True:
             data = zip.read(4096)
@@ -134,10 +146,12 @@ class ProjectHandler(HubOAuthenticated, BaseHandler):
     def _duplicate_project(self, dir):  # TODO: Use id after refactor
         user = self.current_username()
         project = Project.get(owner=user, dir=dir)  # Get the project
-        if project is None:             # Ensure that an existing project was found
-            raise ExistsError
+        if project is None:                         # Ensure that an existing project was found
+            # TODO: Handle un-initialized shared projects
+            self.send_error(404, reason='Unable to retrieve project')
+            return
         # Check to see if the dir directory exists, if so find a good dir name
-        dir_name, count = unused_dir(user, project.dir)
+        dir_name, count = unused_dir(user, encode_shared_name(project.dir))
         # Copy the project directory
         project.duplicate(dir_name)
         # Call JupyterHub API to create a new named server
@@ -588,8 +602,8 @@ def make_app(config_path):
 
         (r"/services/projects/project", ProjectHandler),
         (r"/services/projects/project/", ProjectHandler),
-        (r"/services/projects/project/(?P<id>\w+)/", ProjectHandler),
-        (r"/services/projects/project/(?P<id>\w+)/(?P<directive>\w+)/", ProjectHandler),
+        (r"/services/projects/project/(?P<id>[a-zA-Z0-9_\-\.]+)/", ProjectHandler),
+        (r"/services/projects/project/(?P<id>[a-zA-Z0-9_\-\.]+)/(?P<directive>\w+)/", ProjectHandler),
 
         (r"/services/projects/library", PublishHandler),
         (r"/services/projects/library/", PublishHandler),

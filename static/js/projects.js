@@ -1086,10 +1086,14 @@ class SharedProject extends Project {
         // Add the menu items
         $(this.element).find('.dropdown-menu')
             .append($('<li><a href="#" class="dropdown-item nb-unshare">Unshare</a></li>'))
+            .append($('<li><a href="#" class="dropdown-item nb-duplicate">Duplicate</a></li>'))
+            .append($('<li><a href="#" class="dropdown-item nb-download">Download</a></li>'))
             .append($('<li><a href="#" class="dropdown-item nb-stop">Stop</a></li>'));
 
         // Handle menu clicks
         $(this.element).find('.nb-stop').click(e => Project.not_disabled(e,() => this.stop_project()));
+        $(this.element).find('.nb-duplicate').click(e => Project.not_disabled(e,() => this.duplicate_project()));
+        $(this.element).find('.nb-download').click(e => Project.not_disabled(e,() => this.download_project()));
         $(this.element).find('.nb-unshare').click(e => Project.not_disabled(e,() => this.unshare_project()));
 
         // Hide the checkbox
@@ -1655,7 +1659,7 @@ class MyProjects {
             })
             .catch((error) => {
                 // Likely 503 error was encountered populating user.json, wait 10 seconds and try again
-                Messages.warning_message('The workspace is taking longer than usual to load your notebooks. Please by patient. If the problem persists, log out and log back in again.');
+                Messages.warning_message('The workspace is taking longer than usual to load your notebooks. Please be patient. If the problem persists, log out and log back in again.');
                 setTimeout(() => {
                     Messages.clear_message();
                     MyProjects.redraw_projects(null)

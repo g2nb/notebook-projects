@@ -215,3 +215,7 @@ class Invite(Base):
         session.delete(invite)
         session.commit()
         session.close()
+
+
+def encode_shared_name(name):
+    return name.replace('.', '_')
