@@ -238,7 +238,7 @@ class Project {
     }
 
     api_url() {
-        return `${GenePattern.projects.base_url}api/users/${GenePattern.projects.encoded_username}/servers/${this.slug()}`;
+        return `${GenePattern.projects.base_url}api/users/${GenePattern.projects.encoded_username}/servers/${this.slug()}?_xsrf=${jhdata.xsrf_token}`;
     }
 
     preview_url() {
@@ -1268,7 +1268,7 @@ class NewProject {
     }
 
     api_url() {
-        return `${GenePattern.projects.base_url}api/users/${GenePattern.projects.encoded_username}/servers/`;
+        return `${GenePattern.projects.base_url}api/users/${GenePattern.projects.encoded_username}/servers/?_xsrf=${jhdata.xsrf_token}`;
     }
 
     project_exists(slug) {
