@@ -1271,6 +1271,11 @@ class NewProject {
         return `${GenePattern.projects.base_url}api/users/${GenePattern.projects.encoded_username}/servers/?_xsrf=${jhdata.xsrf_token}`;
     }
 
+    merge_url(api_url, slug) {
+        const index = api_url.lastIndexOf('/');
+        return api_url.slice(0, index+1) + slug + api_url.slice(index+1);
+    }
+
     project_exists(slug) {
         let found_name = false;
         GenePattern.projects.my_projects.forEach(project => {
@@ -1332,7 +1337,7 @@ class NewProject {
                         // Make the AJAX request
                         $.ajax({
                             method: 'POST',
-                            url: this.api_url() + slug,
+                            url: this.merge_url(this.api_url(), slug),
                             contentType: 'application/json',
                             data: JSON.stringify({
                                 "name": form_data['name'],
