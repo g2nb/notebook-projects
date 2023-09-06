@@ -48,6 +48,13 @@ class Stats {
 
             // Draw the updated tables
             Stats.draw_events_table();
+
+            // Data tables
+            new DataTable($('#nb-usage-tools').closest('table'));
+            new DataTable($('#nb-usage-launches').closest('table'));
+            new DataTable($('#nb-usage-labext').closest('table'));
+            new DataTable($('#nb-usage-nbext').closest('table'));
+            new DataTable($('#nb-usage-other').closest('table'));
         })
     }
 
@@ -195,6 +202,9 @@ class Stats {
                 `<a href="/hub/preview?id=${update.project_id}" target="_blank">${update.project}</a>`;
             $('#nb-latest-updates').append(`<tr><td>${project_link}</td><td>${update.comment}</td><td>${update.updated}</td></tr>`);
         });
+
+        new DataTable($('#nb-most-copied').closest('table'));
+        new DataTable($('#nb-latest-updates').closest('table'));
     }
 
     static draw_events_table() {
@@ -264,6 +274,13 @@ class Stats {
         for (const event_type in other_events) {
             $('#nb-usage-other').append(`<tr><td>${event_type}</td><td>${other_events[event_type].descriptions}</td>\<td>${other_events[event_type].count}</td><td>${other_events[event_type].latest.toUTCString()}</td></tr>`);
         }
+
+        // Data tables
+        new DataTable($('#nb-usage-tools').closest('table'));
+        new DataTable($('#nb-usage-launches').closest('table'));
+        new DataTable($('#nb-usage-labext').closest('table'));
+        new DataTable($('#nb-usage-nbext').closest('table'));
+        new DataTable($('#nb-usage-other').closest('table'));
     }
 }
 
