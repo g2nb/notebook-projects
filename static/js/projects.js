@@ -42,6 +42,7 @@ class Project {
                 <p class="panel-text"></p>
                 <div class="panel-text nb-tags"></div>
             </div>
+            <div class="nb-matches"></div>
         </div>`;
 
     constructor(project_json) {
@@ -74,12 +75,88 @@ class Project {
         this.attach_default_click();
     }
 
+    files() {
+        return this.model.files || [];
+    }
+
+    attach_files(files) {
+        this.model.files = files;
+    }
+
     prepare_view(list_view=true) {
         if (list_view) this.element.classList.add('nb-project-list');
         else this.element.classList.remove('nb-project-list');
         this._adjust_width();
 
         return this.element;
+    }
+
+    _find_matches(term) {
+        const matches = [];
+
+        // Search metadata
+        if (this.display_name().toLowerCase().includes(term))
+            matches.push({'Name': this.display_name()});
+        if (this.image().toLowerCase().includes(term))
+            matches.push({'Environment': this.image()});
+        if (this.description().toLowerCase().includes(term))
+            matches.push({'Description': this.description()});
+        if (this.author().toLowerCase().includes(term))
+            matches.push({'Author': this.author()});
+        if (this.quality().toLowerCase().includes(term))
+            matches.push({'Quality': this.quality()});
+        if (this.citation().toLowerCase().includes(term))
+            matches.push({'Citation': this.citation()});
+        for (let t of this.tags()) if (t.toLowerCase().includes(term)) matches.push({'Tag': t});
+
+        // Search files
+        for (let f of this.files()) {
+            if (f.filename.toLowerCase().includes(term))
+                matches.push({'File': f.filename});
+        }
+
+        return matches;
+    }
+
+    _add_matches(matches_box, matches) {
+        // Empty the match box
+        matches_box.innerHTML = '';
+
+        for (let match of matches) {
+            const key = Object.keys(match)[0];
+            matches_box.innerHTML += `<span class="nb-match-key">${key}</span>`;
+            matches_box.innerHTML += `<span class="nb-match-result">${match[key]}</span>`;
+        }
+    }
+
+    show_matches(term) {
+        // Get the element in which to display the matches
+        const matches_box = this.element.querySelector('.nb-matches');
+        if (!matches_box) return;
+
+        // Search for project for text matching the term
+        const matches = this._find_matches(term);
+
+        // If there's a match, add it to the box and display it
+        if (matches.length) {
+            this._add_matches(matches_box, matches);
+            matches_box.style.display = 'grid';
+            this.element.classList.remove('hidden');
+        }
+        else {
+            this.hide_matches();
+            this.element.classList.add('hidden');
+        }
+    }
+
+    hide_matches() {
+        // Get the element in which to display the matches
+        const matches_box = this.element.querySelector('.nb-matches');
+        if (!matches_box) return;
+
+        // Empty and hide it
+        matches_box.innerHTML = '';
+        matches_box.style.display = 'none';
     }
 
     attach_default_click() {
@@ -1840,7 +1917,8 @@ class MyProjects {
     }
 
     initialize_search() {
-        $('#nb-project-search').keyup((event) => {
+        const search_input = $('#nb-project-search');
+        search_input.keyup((event) => {
             let search = $(event.target).val().trim().toLowerCase();
 
             // Display the matching projects
@@ -1855,6 +1933,46 @@ class MyProjects {
                 else project.addClass('hidden');
             });
         });
+
+        // Make sure advanced search div works
+        const panel = document.querySelector('#nb-project-controls');
+        document.addEventListener("click", () => {
+            if (search_input[0] === document.activeElement ||
+                panel === document.activeElement ||
+                panel.contains(document.activeElement)) panel.style.display = 'block';
+            else panel.style.display = 'none';
+        });
+
+        // Kick off recursive search
+        search_input.keypress(event => {
+            if (event.which !== 13) return; // Return if enter was not pressed
+
+            // Perform the search
+            const term = search_input.val().trim().toLowerCase();
+            MyProjects.recursive_search(term);
+        });
+    }
+
+    static async recursive_search(term) {
+        const checked = $('#nb-project-recursive').is(':checked');
+
+        for (let p of GenePattern.projects.my_projects) {
+            // Hide matches if recursive search is not checked or if the search term is blank
+            if (!term || !checked) {
+                p.hide_matches();
+                continue;
+            }
+
+            // Lazily query and attach files, if necessary
+            if (!p.files() || !p.files.length) {
+                const project = await fetch(`/services/projects/project/${p.slug()}/?files=true`)
+                    .then(response => response.json());
+                p.attach_files(project.files);
+            }
+
+            // Search the project data for matches and display any that are found
+            p.show_matches(term);
+        }
     }
 
     initialize_buttons() {

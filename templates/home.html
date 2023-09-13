@@ -21,6 +21,12 @@
             <h1>Your Projects</h1>
             <p class="lead nb-lead">Launch, create or share notebook projects.</p>
             <input type="search" id="nb-project-search" placeholder="Search Projects" class="form-control" />
+            <form id="nb-project-controls" class="panel panel-default panel-body" tabindex="0">
+                <label for="nb-project-recursive">
+                    <input type="checkbox" id="nb-project-recursive" />&nbsp;
+                    Search file names (press return)
+                </label>
+            </form>
             <div id="nb-bulk" class="btn-group hidden">
                 <button class="btn btn-default" name="stop" title="Stop Projects">
                     <i class="fa fa-stop"></i>
