@@ -1781,7 +1781,7 @@ class MyProjects {
             MyProjects.link_shared();
 
             // Apply any existing search filter
-            $('#nb-project-search').trigger('keyup');
+            $('#nb-project-search').trigger('keypress');
         });
     }
 
@@ -1918,21 +1918,6 @@ class MyProjects {
 
     initialize_search() {
         const search_input = $('#nb-project-search');
-        search_input.keyup((event) => {
-            let search = $(event.target).val().trim().toLowerCase();
-
-            // Display the matching projects
-            const projects = $('#projects, #shares').find('.nb-project');
-            projects.each(function(i, project) {
-                project = $(project);
-
-                // Matching notebook
-                if (project.find("div:not(.dropdown)").text().toLowerCase().includes(search)) project.removeClass('hidden');
-
-                // Not matching notebook
-                else project.addClass('hidden');
-            });
-        });
 
         // Make sure advanced search div works
         const panel = document.querySelector('#nb-project-controls');
@@ -1943,13 +1928,35 @@ class MyProjects {
             else panel.style.display = 'none';
         });
 
-        // Kick off recursive search
-        search_input.keypress(event => {
-            if (event.which !== 13) return; // Return if enter was not pressed
+        // Link up the search button
+        $("#nb-search-button").click(event => search_input.trigger("keypress"));
 
-            // Perform the search
+        // Kick off right search when a key is pressed
+        search_input.keypress(event => {
+            if (event.which !== 13 &&               // Return if enter was not pressed
+                event.which !== undefined) return;  // and this was not triggered by click
+
+            // Get which checkboxes ar checked
+            const files_checked = $('#nb-project-recursive').is(':checked');
             const term = search_input.val().trim().toLowerCase();
-            MyProjects.recursive_search(term);
+
+            // Perform the correct search
+            if (files_checked) MyProjects.recursive_search(term);
+            else MyProjects.basic_search(term);
+        });
+    }
+
+    static basic_search(search) {
+        // Display the matching projects
+        const projects = $('#projects, #shares').find('.nb-project');
+        projects.each(function(i, project) {
+            project = $(project);
+
+            // Matching notebook
+            if (project.find("div:not(.dropdown)").text().toLowerCase().includes(search)) project.removeClass('hidden');
+
+            // Not matching notebook
+            else project.addClass('hidden');
         });
     }
 
@@ -2140,7 +2147,7 @@ class Library {
             Library.redraw_pinned();                                                // Redraw the pinned tags
 
             // Apply any existing search filter
-            $('#nb-library-search').trigger('keyup');
+            $('#nb-library-search').trigger('keypress');
         });
     }
 
@@ -2166,7 +2173,7 @@ class Library {
         pinned_block.find('a').click(e => {
             const tag = $(e.target).attr("data-tag");                                 // Get the tag
 
-            if (tag !== '-all') $('#nb-library-search').val('').trigger('keyup');// Clear the search
+            if (tag !== '-all') $('#nb-library-search').val('').trigger('keypress');// Clear the search
 
             $("#library").find(".nb-project").each((i, p) => {                      // For each project
                 let found = false;
@@ -2190,9 +2197,16 @@ class Library {
     }
 
     initialize_search() {
+        const search_input = $('#nb-library-search');
         const pinned_block = $('#pinned-tags');
 
-        $('#nb-library-search').keyup((event) => {
+        // Link up the search button
+        $("#nb-library-button").click(event => search_input.trigger("keypress"));
+
+        search_input.keypress((event) => {
+            if (event.which !== 13 &&               // Return if enter was not pressed
+                event.which !== undefined) return;  // and this was not triggered by click
+
             if (pinned_block.find('li.active').text() !== 'all projects')           // Always search all projects
                 pinned_block.find('a[data-tag="-all"]').click();
 
@@ -2289,7 +2303,7 @@ class Shares {
             else document.querySelector('#nb-sharing-header').style.display = 'block';
 
             // Apply any existing search filter
-            $('#nb-project-search').trigger('keyup');
+            $('#nb-project-search').trigger('keypress');
         });
     }
 

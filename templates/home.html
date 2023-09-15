@@ -21,10 +21,15 @@
             <h1>Your Projects</h1>
             <p class="lead nb-lead">Launch, create or share notebook projects.</p>
             <input type="search" id="nb-project-search" placeholder="Search Projects" class="form-control" />
+            <button id="nb-search-button"><i class="fa fa-search"></i></i></button>
             <form id="nb-project-controls" class="panel panel-default panel-body" tabindex="0">
                 <label for="nb-project-recursive">
+                    <input type="checkbox" id="nb-project-metadata" checked disabled />&nbsp;
+                    Search metadata
+                </label>
+                <label for="nb-project-recursive">
                     <input type="checkbox" id="nb-project-recursive" />&nbsp;
-                    Search file names (press return)
+                    Search file names inside projects
                 </label>
             </form>
             <div id="nb-bulk" class="btn-group hidden">
@@ -73,6 +78,7 @@
             <h1>Public Library</h1>
             <p class="lead nb-lead">Browse, launch and reproduce public projects.</p>
             <input type="search" id="nb-library-search" placeholder="Search Library" class="form-control" />
+            <button id="nb-library-button"><i class="fa fa-search"></i></i></button>
             <ul id="pinned-tags" class="nav nav-tabs"></ul>
         </div>
         <div id="library">

@@ -419,13 +419,25 @@ div.nb-project-new > .nb-img-top {
     box-shadow: none;
 }
 
+#nb-search-button,
+#nb-library-button {
+    position: absolute;
+    top: 1px;
+    right: 0;
+    height: 30px;
+    width: 30px;
+    z-index: 2;
+    background: transparent;
+    border: none;
+}
+
 #nb-project-controls {
     position: absolute;
     display: none;
     right: -5px;
     width: 285px;
     top: -5px;
-    height: 72px;
+    height: 100px;
     padding-top: 43px;
     z-index: 1;
 
