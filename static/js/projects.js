@@ -1740,6 +1740,11 @@ class MyProjects {
                 return { error: false };
             })
             .catch((error) => {
+                if (error.status === 431) {
+                    Messages.warning_message('Attempting to retrieve your projects returned an error. This is likely the result of a bug in JupyterHub. The issue will resolve on its own, but in the meantime please try loading the workspace in a different browser.');
+                    return { error: true };
+                }
+
                 // Likely 503 error was encountered populating user.json, wait 10 seconds and try again
                 Messages.warning_message('The workspace is taking longer than usual to load your notebooks. Please be patient. If the problem persists, log out and log back in again.');
                 setTimeout(() => {
