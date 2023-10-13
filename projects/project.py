@@ -215,9 +215,9 @@ def unused_dir(user, dir_name):
 
 def runtime_access(target_dir):
     """Allow access to the runtime directory (prevents errors in JupyterHub 2.3.x)"""
-    local_dir = os.path.join(target_dir, '.local')
-    if os.path.exists(local_dir):
-        for root, dirs, files in os.walk(local_dir):
+    # local_dir = os.path.join(target_dir, '.local')
+    if os.path.exists(target_dir):
+        for root, dirs, files in os.walk(target_dir):
             os.chmod(root, 0o777)                                   # Set perms on root directory
             for d in dirs: os.chmod(os.path.join(root, d), 0o777)   # Set perms on subdirectories
             for f in files: os.chmod(os.path.join(root, f), 0o777)  # Set perms on files
