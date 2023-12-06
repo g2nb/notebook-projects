@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship, backref
 from .config import Config
 from .hub import encode_username
 from .errors import SpecError
+from .threads import synchronized
 from .zip import zip_dir, unzip_dir, list_files
 from .project import ProjectConfig, Base, runtime_access
 
@@ -92,6 +93,29 @@ class Publish(Base):
         target_dir = os.path.join(Config.instance().USERS_PATH, hub_user, dir)  # Path in which to unzip
         os.makedirs(os.path.dirname(target_dir), mode=0o777, exist_ok=True)     # Lazily create directories
         unzip_dir(zip_path, target_dir)                                         # Unzip to directory
+        runtime_access(target_dir)                                              # Ensure runtime permissions
+
+    def move_or_unzip(self, target_user, dir):
+        cache_path = self.cache_path()                                          # Check for cached copy
+        if cache_path: self.move_cache(target_user, dir, cache_path)            # If so, move the cached copy
+        else: self.unzip(target_user, dir)                                      # Otherwise, unzip a copy
+
+    # @synchronized
+    def cache_path(self):
+        # Get the parent directory of any existing caches
+        project_caches = os.path.join(Config.instance().REPO_PATH, self.owner, f'{self.dir}')
+        if not os.path.exists(project_caches): return None                      # No parent, no cache
+        if not os.path.isdir(project_caches): return None                       # No directory, no cache
+        caches = [f.path for f in os.scandir(project_caches)                    # Look for cached copies
+                  if f.is_dir() and not f.name.startswith('.')]
+        if len(caches) == 0: return None                                        # No copies, no cache
+        return caches[0]                                                        # Return path to cache
+
+    def move_cache(self, target_user, dir, cache_path):
+        hub_user = encode_username(target_user)                                 # Encoded JupyterHub username
+        target_dir = os.path.join(Config.instance().USERS_PATH, hub_user, dir)  # Path in which to move it
+        os.makedirs(os.path.dirname(target_dir), mode=0o777, exist_ok=True)     # Lazily create directories
+        os.replace(cache_path, target_dir)                                      # Move the cached copy
         runtime_access(target_dir)                                              # Ensure runtime permissions
 
     def delete(self):
@@ -288,6 +312,3 @@ class Update(Base):
         results = query.all()
         session.close()
         return results
-
-
-
