@@ -214,12 +214,12 @@ def spawner_escape(text):
 
 
 def shared_with_me(name):
-    return '.' in name
+    return '-2e' in name
 
 
 def user(name):
-    return name.split('.')[0]
+    return name.split('-2e')[0]
 
 
 def slug(name):
-    return name.split('.')[1]
+    return name.split('-2e')[1]
