@@ -253,8 +253,8 @@ class PublishHandler(HubOAuthenticated, BaseHandler):
         # Check to see if the dir directory exists, if so find a good dir name
         user = self.current_username()
         dir_name, count = unused_dir(user, project.dir)
-        # Move cached copy or unzip to the current user's dir directory
-        project.move_or_unzip(user, dir_name)
+        # Unzip to the current user's dir directory
+        project.unzip(user, dir_name)
         # Call JupyterHub API to create a new named server
         spec = project.json()
         if count: spec['name'] += f' (copy {count})'
