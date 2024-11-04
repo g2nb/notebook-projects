@@ -8,7 +8,7 @@ from .config import Config
 from .emails import send_published_email, validate_token
 from .errors import ExistsError, PermissionError, SpecError, InvalidProjectError, InviteError
 from .hub import create_named_server, user_spawners, decode_username, stop_named_server, delete_named_server, \
-    usage_tracker, lazily_create_dirs, shared_with_me
+    usage_tracker, lazily_create_dirs, shared_with_me, encode_username
 from .project import Project, unused_dir
 from .publish import Publish, Tag, Update
 from .sharing import Share, Invite, encode_shared_name
@@ -456,6 +456,7 @@ class ShareHandler(HubOAuthenticated, BaseHandler):
                 else: raise PermissionError
             invite.accepted = True                                  # Remove the invite
             resp = invite.save()                                    # Save changes
+            self._create_symlink(invite)
             if redirect: self.redirect('/hub/')                     # Redirect to the project
             else: self.write(resp)                                  # Return the invite json
 
@@ -463,6 +464,12 @@ class ShareHandler(HubOAuthenticated, BaseHandler):
             self.send_error(400, reason='Unable to accept share, invite id not found')
         except PermissionError:                                     # Forbidden
             self.send_error(403, reason='You cannot accept an invite that is not yours')
+
+    def _create_symlink(self, invite):
+        share = Share.get(id=invite.share_id)
+        user_dir = os.path.join(Config.instance().USERS_PATH, encode_username(invite.user))
+        project_name = encode_username(share.owner) + '.' + share.dir
+        lazily_create_dirs(user_dir, project_name)
 
     def _remove(self, id=None):
         """Unshare a project"""
