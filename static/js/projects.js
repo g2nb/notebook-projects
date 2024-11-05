@@ -1399,8 +1399,9 @@ class NewProject {
                         if (this.project_dialog.missing_required()) return e.stopPropagation();
 
                         // Generate the slug
-                        let slug = form_data['name'].toLowerCase().replace(/[^A-Z0-9]+/ig, "_");
-                        if (slug.endsWith('_')) slug += 'project';  // Swarm doesn't like slugs that end in an underscore
+                        let slug = form_data['name'].toLowerCase()          // Lowercase normalize
+                            .replace(/[^A-Z0-9]+/ig, "_")   // Special characters to underscores
+                            .replace(/^_+|_+$/g, '');       // Remove leading and trailing _
 
                         // Make sure there isn't already a project named this
                         if (this.project_exists(slug)) {
