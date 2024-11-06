@@ -592,8 +592,10 @@ class Project {
             contentType: 'application/json',
             data: '{ "remove": false }',
             success: () => {
-                this.update_running(false);
-                this.update_gear_menu(false);
+                setTimeout(() => {
+                    this.update_running(false);
+                    this.update_gear_menu(false);
+                }, 2000);
             },
             error: () => Messages.error_message('Unable to stop project.')
         });
